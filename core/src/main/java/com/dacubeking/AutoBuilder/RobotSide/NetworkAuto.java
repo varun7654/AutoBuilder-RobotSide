@@ -5,7 +5,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import org.jetbrains.annotations.NotNull;
 
-public class NetworkAuto extends AbstractGuiAuto {
+public class NetworkAuto extends GuiAuto {
 
     static final @NotNull NetworkTableInstance instance = NetworkTableInstance.getDefault();
     static final @NotNull NetworkTable table = instance.getTable("autodata");

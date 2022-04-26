@@ -19,7 +19,7 @@ import java.util.List;
 
 import static com.dacubeking.AutoBuilder.RobotSide.RobotInterface.AutonomousContainer.getCommandTranslator;
 
-public abstract class AbstractGuiAuto implements Runnable {
+public class GuiAuto implements Runnable {
 
     private Autonomous autonomous;
     Pose2d initialPose;
@@ -30,13 +30,8 @@ public abstract class AbstractGuiAuto implements Runnable {
      *
      * @param autonomousFile File location of the auto
      */
-    public AbstractGuiAuto(File autonomousFile) {
-        try {
-            autonomous = (Autonomous) Serializer.deserializeFromFile(autonomousFile, Autonomous.class);
-        } catch (IOException e) {
-            //e.printStackTrace();
-            DriverStation.reportError("Failed to deserialize auto. " + e.getLocalizedMessage(), e.getStackTrace());
-        }
+    public GuiAuto(File autonomousFile) throws IOException {
+        autonomous = (Autonomous) Serializer.deserializeFromFile(autonomousFile, Autonomous.class);
         init();
     }
 
@@ -46,7 +41,7 @@ public abstract class AbstractGuiAuto implements Runnable {
      *
      * @param autonomousJson String of the autonomous
      */
-    public AbstractGuiAuto(String autonomousJson) {
+    public GuiAuto(String autonomousJson) {
         try {
             autonomous = (Autonomous) Serializer.deserialize(autonomousJson, Autonomous.class);
         } catch (IOException e) {

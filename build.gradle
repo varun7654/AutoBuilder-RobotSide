@@ -46,8 +46,8 @@ publishing {
 
     repositories {
         maven {
-            version = '0.1.0'
-            group = ''
+            version = '0.0.2'
+            group = 'com.dacubeking'
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/varun7654/AutoBuilder-Robot"
             credentials {

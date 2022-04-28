@@ -45,8 +45,12 @@ publishing {
 
     repositories {
         maven {
-            name = 'autobuilder-robot'
-            url = layout.buildDirectory.dir("core")
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/varun7654/AutoBuilder-RobotSide"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }

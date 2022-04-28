@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.reflection;
+package com.dacubeking.AutoBuilder.robot.serialization.reflection;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

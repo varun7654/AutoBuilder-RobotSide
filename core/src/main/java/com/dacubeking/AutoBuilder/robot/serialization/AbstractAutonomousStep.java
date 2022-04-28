@@ -1,7 +1,7 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization;
+package com.dacubeking.AutoBuilder.robot.serialization;
 
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.CommandExecutionFailedException;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.SendableScript;
+import com.dacubeking.AutoBuilder.robot.serialization.command.CommandExecutionFailedException;
+import com.dacubeking.AutoBuilder.robot.serialization.command.SendableScript;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -26,6 +26,4 @@ public abstract class AbstractAutonomousStep {
 
     public abstract void execute(List<SendableScript> scriptsToExecuteByTime,
                                  List<SendableScript> scriptsToExecuteByPercent) throws InterruptedException, CommandExecutionFailedException;
-
-
 }

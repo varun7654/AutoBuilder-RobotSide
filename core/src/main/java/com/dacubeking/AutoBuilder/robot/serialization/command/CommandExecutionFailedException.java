@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.command;
+package com.dacubeking.AutoBuilder.robot.serialization.command;
 
 public class CommandExecutionFailedException extends Exception {
 

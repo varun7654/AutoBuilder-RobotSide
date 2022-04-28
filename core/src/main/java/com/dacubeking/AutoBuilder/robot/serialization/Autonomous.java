@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization;
+package com.dacubeking.AutoBuilder.robot.serialization;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,7 +23,8 @@ public class Autonomous {
     }
 
     @Override
-    public @NotNull String toString() {
+    public @NotNull
+    String toString() {
         return "Autonomous{" +
                 "autonomousSteps=" + autonomousSteps +
                 '}';

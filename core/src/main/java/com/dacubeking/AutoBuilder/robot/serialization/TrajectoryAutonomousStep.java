@@ -1,7 +1,7 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization;
+package com.dacubeking.AutoBuilder.robot.serialization;
 
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.CommandExecutionFailedException;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.SendableScript;
+import com.dacubeking.AutoBuilder.robot.serialization.command.CommandExecutionFailedException;
+import com.dacubeking.AutoBuilder.robot.serialization.command.SendableScript;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-import static com.dacubeking.AutoBuilder.RobotSide.RobotInterface.AutonomousContainer.getCommandTranslator;
+import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
@@ -26,7 +26,8 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         this.rotations = rotations;
     }
 
-    public @NotNull Trajectory getTrajectory() {
+    public @NotNull
+    Trajectory getTrajectory() {
         return trajectory;
     }
 
@@ -82,7 +83,7 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         for (SendableScript sendableScript : scriptsToExecuteByPercent) {
             sendableScript.execute();
         }
-        
+
         scriptsToExecuteByTime.clear();
         scriptsToExecuteByPercent.clear();
     }

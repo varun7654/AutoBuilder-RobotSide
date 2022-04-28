@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.command;
+package com.dacubeking.AutoBuilder.robot.serialization.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -19,7 +19,8 @@ import java.util.function.Function;
 public class SendableCommand {
 
     @JsonProperty("methodName")
-    public final @NotNull String methodName;
+    public final @NotNull
+    String methodName;
 
     @JsonProperty("args") public final String @NotNull [] args;
 
@@ -123,10 +124,12 @@ public class SendableCommand {
     }
 
     @JsonIgnoreProperties
-    final @Nullable Object instance;
+    final @Nullable
+    Object instance;
 
     @JsonIgnoreProperties
-    final @Nullable Method methodToCall;
+    final @Nullable
+    Method methodToCall;
 
     @JsonIgnoreProperties final Object @NotNull [] objArgs;
 

@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.reflection;
+package com.dacubeking.AutoBuilder.robot.serialization.reflection;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +35,8 @@ public final class ReflectionClassData {
     }
 
     @Override
-    public @NotNull String toString() {
+    public @NotNull
+    String toString() {
         return "ReflectionClassData{" +
                 "fullName='" + fullName + '\'' +
                 ", fieldNames=" + Arrays.toString(fieldNames) +

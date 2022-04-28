@@ -1,7 +1,7 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization;
+package com.dacubeking.AutoBuilder.robot.serialization;
 
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.CommandExecutionFailedException;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.SendableScript;
+import com.dacubeking.AutoBuilder.robot.serialization.command.CommandExecutionFailedException;
+import com.dacubeking.AutoBuilder.robot.serialization.command.SendableScript;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,7 +21,8 @@ public class ScriptAutonomousStep extends AbstractAutonomousStep {
     }
 
     @Override
-    public @NotNull String toString() {
+    public @NotNull
+    String toString() {
         return "ScriptAutonomousStep{" + "sendableScript='" + sendableScript + '\'' + '}';
     }
 

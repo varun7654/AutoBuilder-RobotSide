@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.reflection;
+package com.dacubeking.AutoBuilder.robot.serialization.reflection;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,8 @@ public final class ReflectionMethodData {
     }
 
     @Override
-    public @NotNull String toString() {
+    public @NotNull
+    String toString() {
         return "ReflectionMethodData{" +
                 "methodName='" + methodName + '\'' +
                 ", parameterTypes=" + Arrays.toString(parameterTypes) +

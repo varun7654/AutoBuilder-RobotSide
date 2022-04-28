@@ -1,12 +1,12 @@
-package com.dacubeking.AutoBuilder.RobotSide;
+package com.dacubeking.AutoBuilder.robot;
 
-import com.dacubeking.AutoBuilder.RobotSide.RobotInterface.AutonomousContainer;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.AbstractAutonomousStep;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.Autonomous;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.Serializer;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.TrajectoryAutonomousStep;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.CommandExecutionFailedException;
-import com.dacubeking.AutoBuilder.RobotSide.serialization.command.SendableScript;
+import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
+import com.dacubeking.AutoBuilder.robot.serialization.AbstractAutonomousStep;
+import com.dacubeking.AutoBuilder.robot.serialization.Autonomous;
+import com.dacubeking.AutoBuilder.robot.serialization.Serializer;
+import com.dacubeking.AutoBuilder.robot.serialization.TrajectoryAutonomousStep;
+import com.dacubeking.AutoBuilder.robot.serialization.command.CommandExecutionFailedException;
+import com.dacubeking.AutoBuilder.robot.serialization.command.SendableScript;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dacubeking.AutoBuilder.RobotSide.RobotInterface.AutonomousContainer.getCommandTranslator;
+import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
 public class GuiAuto implements Runnable {
 

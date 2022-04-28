@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.RobotInterface;
+package com.dacubeking.AutoBuilder.robot.robotinterface;
 
 import com.google.common.base.Preconditions;
 import edu.wpi.first.math.geometry.Pose2d;

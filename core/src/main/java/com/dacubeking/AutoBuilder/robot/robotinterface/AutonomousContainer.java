@@ -1,6 +1,6 @@
-package com.dacubeking.AutoBuilder.RobotSide.RobotInterface;
+package com.dacubeking.AutoBuilder.robot.robotinterface;
 
-import com.dacubeking.AutoBuilder.RobotSide.GuiAuto;
+import com.dacubeking.AutoBuilder.robot.GuiAuto;
 import com.google.common.base.Preconditions;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;

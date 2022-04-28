@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization;
+package com.dacubeking.AutoBuilder.robot.serialization;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -33,45 +33,43 @@ public final class OsUtil {
             isMac = false;
             is64Bit = false;
         }
-   }
+    }
 
-    public static @Nullable String getUserConfigDirectory() {
+    public static @Nullable
+    String getUserConfigDirectory() {
         return getUserConfigDirectory(null);
     }
 
-    public static @Nullable String getUserConfigDirectory(@Nullable String applicationName) {
+    public static @Nullable
+    String getUserConfigDirectory(@Nullable String applicationName) {
         String CONFIG_HOME;
 
         if ((CONFIG_HOME = System.getenv("XDG_CONFIG_HOME")) == null) {
             if (isLinux || isAndroid) {
                 CONFIG_HOME = System.getProperty("user.home") + "/.config";
-            } else if (isMac)
-            {
-                CONFIG_HOME = System.getProperty("user.home")+"/Library/Preferences";
-            }
-            else if(isIos)
-            {
-                CONFIG_HOME = System.getProperty("user.home")+"/Documents";
-            }
-            else if(isWindows)
-            {
-                if((CONFIG_HOME = System.getenv("APPDATA"))==null)
-                {
-                    CONFIG_HOME = System.getProperty("user.home")+"/Local Settings";
+            } else if (isMac) {
+                CONFIG_HOME = System.getProperty("user.home") + "/Library/Preferences";
+            } else if (isIos) {
+                CONFIG_HOME = System.getProperty("user.home") + "/Documents";
+            } else if (isWindows) {
+                if ((CONFIG_HOME = System.getenv("APPDATA")) == null) {
+                    CONFIG_HOME = System.getProperty("user.home") + "/Local Settings";
                 }
             }
         }
 
-        if(applicationName==null || CONFIG_HOME==null) return CONFIG_HOME;
+        if (applicationName == null || CONFIG_HOME == null) return CONFIG_HOME;
 
-        return CONFIG_HOME+"/"+applicationName;
+        return CONFIG_HOME + "/" + applicationName;
     }
 
-    public static @Nullable String getUserDataDirectory() {
+    public static @Nullable
+    String getUserDataDirectory() {
         return getUserDataDirectory(null);
     }
 
-    public static @Nullable String getUserDataDirectory(@Nullable String applicationName) {
+    public static @Nullable
+    String getUserDataDirectory(@Nullable String applicationName) {
         String dataHome;
 
         if ((dataHome = System.getenv("XDG_DATA_HOME")) == null) {
@@ -81,9 +79,7 @@ public final class OsUtil {
                 dataHome = System.getProperty("user.home") + "/Library/Application Support";
             } else if (isIos) {
                 dataHome = System.getProperty("user.home") + "/Documents";
-            }
-            else if(isWindows)
-            {
+            } else if (isWindows) {
                 if ((dataHome = System.getenv("APPDATA")) == null) {
                     dataHome = System.getProperty("user.home") + "/Local Settings/Application Data";
                 }
@@ -94,5 +90,4 @@ public final class OsUtil {
 
         return dataHome + "/" + applicationName;
     }
-
 }

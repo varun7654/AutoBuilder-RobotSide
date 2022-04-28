@@ -1,7 +1,6 @@
-package com.dacubeking.AutoBuilder.RobotSide.serialization.reflection;
+package com.dacubeking.AutoBuilder.robot.serialization.reflection;
 
-import com.dacubeking.AutoBuilder.RobotSide.serialization.Serializer;
-import edu.wpi.first.wpilibj.Filesystem;
+import com.dacubeking.AutoBuilder.robot.serialization.Serializer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -9,7 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.dacubeking.AutoBuilder.RobotSide.serialization.reflection.ReflectionUtils.findClasses;
 public final class ClassInformationSender {
     public ClassInformationSender() {
 
@@ -17,7 +15,7 @@ public final class ClassInformationSender {
 
     public static void updateReflectionInformation(@Nullable File file) {
         try {
-            List<Class<?>> classes = findClasses(new File(Filesystem.getLaunchDirectory() + "/build/classes/java/main"), "");
+            List<Class<?>> classes = ReflectionUtils.findClasses("");
             ArrayList<ReflectionClassData> reflectionClassData = new ArrayList<>();
             for (Class<?> aClass : classes) {
                 reflectionClassData.add(new ReflectionClassData(aClass));
@@ -33,6 +31,4 @@ public final class ClassInformationSender {
             e.printStackTrace();
         }
     }
-
-
 }

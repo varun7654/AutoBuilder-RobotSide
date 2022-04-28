@@ -1,4 +1,4 @@
-package com.dacubeking.AutoBuilder.RobotSide;
+package com.dacubeking.AutoBuilder.robot;
 
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;

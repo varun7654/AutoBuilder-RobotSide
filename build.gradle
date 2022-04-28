@@ -17,9 +17,6 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-version = '0.1.0'
-group = 'com.dacubeking'
-
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
@@ -49,6 +46,8 @@ publishing {
 
     repositories {
         maven {
+            version = '0.1.0'
+            group = 'com.dacubeking'
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/varun7654/AutoBuilder-Robot"
             credentials {

@@ -11,11 +11,15 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id "java"
+    id 'signing'
     id "edu.wpi.first.GradleRIO" version "2022.4.1"
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
+
+version = '0.0.1'
+group = 'com.dacubeking'
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -44,15 +48,11 @@ publishing {
         }
     }
 
-    repositories {
-        maven {
-            version = '0.0.2'
-            group = 'autobuilder-robot'
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/varun7654/AutoBuilder-Robot"
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+    publishing {
+        repositories {
+            maven {
+                credentials(PasswordCredentials)
+                url = uri("https://maven.dacubeking.com/releases/")
             }
         }
     }

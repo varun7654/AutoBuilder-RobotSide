@@ -10,7 +10,10 @@ import org.reflections.scanners.Scanners;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class ClassInformationSender {
 
@@ -22,7 +25,26 @@ public final class ClassInformationSender {
         try {
             AutonomousContainer.getInstance().isInitialized();
             Reflections reflections = new Reflections(packageName, Scanners.SubTypes.filterResultsBy(s -> true));
-            ArrayList<Class<?>> classes = new ArrayList<>(reflections.getSubTypesOf(Object.class));
+            Set<Class<?>> classes = new HashSet<>();
+
+
+            HashMap<String, Map<String, Set<String>>> store = reflections.getStore();
+            for (Map<String, Set<String>> value : store.values()) {
+                for (Set<String> discoveredClasses : value.values()) {
+                    for (String discoveredClass : discoveredClasses) {
+                        if (discoveredClass.contains(packageName)) {
+                            try {
+                                classes.add(Class.forName(discoveredClass));
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+
+            System.out.println("Store Map: " + reflections.getStore());
+            System.out.println("Classes: " + classes);
 
             ReflectionClassDataList reflectionClassDataList = new ReflectionClassDataList();
             for (Class<?> aClass : classes) {

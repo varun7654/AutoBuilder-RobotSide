@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
+@Internal
 public class CommandTranslator {
     protected final @NotNull Consumer<Trajectory> setNewTrajectory;
     protected final @NotNull Runnable stopRobot;
@@ -31,7 +33,7 @@ public class CommandTranslator {
      *                                 the current trajectory that is being driven.
      * @param setRobotPose             The consumer to call to set the initial pose of the robot at the start of autonomous
      */
-    protected CommandTranslator(
+    public CommandTranslator(
             @NotNull Consumer<Trajectory> setNewTrajectory,
             @NotNull Runnable stopRobot,
             @Nullable Consumer<Rotation2d> setAutonomousRotation,

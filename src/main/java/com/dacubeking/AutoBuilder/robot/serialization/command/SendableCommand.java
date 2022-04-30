@@ -1,5 +1,6 @@
 package com.dacubeking.AutoBuilder.robot.serialization.command;
 
+import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -91,31 +92,35 @@ public class SendableCommand {
             System.arraycopy(splitMethod, 0, classNameArray, 0, classNameArray.length);
             String className = String.join(".", classNameArray);
 
-            try {
-                Class<?> cls = Class.forName(className);
-                Class<?>[] typeArray = Arrays.stream(objArgs).sequential().map(Object::getClass).toArray(Class[]::new);
-                if (typeArray.length == 0) {
-                    methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1]);
-                } else {
-                    methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1],
-                            Arrays.stream(objArgs).sequential().map((o) -> getPrimitiveClass(o.getClass()))
-                                    .toArray(Class<?>[]::new));
+            if (AutonomousContainer.getInstance().getAccessibleInstances().containsKey(className)) {
+                try {
+                    Class<?> cls = Class.forName(className);
+                    Class<?>[] typeArray = Arrays.stream(objArgs).sequential().map(Object::getClass).toArray(Class[]::new);
+                    if (typeArray.length == 0) {
+                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1]);
+                    } else {
+                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1],
+                                Arrays.stream(objArgs).sequential().map((o) -> getPrimitiveClass(o.getClass()))
+                                        .toArray(Class<?>[]::new));
+                    }
+                    methodToCall.setAccessible(true);
+                    if (!Modifier.isStatic(methodToCall.getModifiers())) {
+                        Method getInstance = cls.getDeclaredMethod("getInstance");
+                        getInstance.setAccessible(true);
+                        instance = getInstance.invoke(null);
+                    }
+                } catch (ClassNotFoundException e) {
+                    DriverStation.reportError("Class not found: " + className + ". " + e.getMessage(), e.getStackTrace());
+                } catch (NoSuchMethodException e) {
+                    DriverStation.reportError(
+                            "Could not find method : " + splitMethod[splitMethod.length - 1] + " in class " + className + ". " + e.getMessage(),
+                            e.getStackTrace());
+                } catch (InvocationTargetException | IllegalAccessException e) {
+                    DriverStation.reportError("Could not get singleton reference in class " + className + " for method: " +
+                            splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e.getStackTrace());
                 }
-                methodToCall.setAccessible(true);
-                if (!Modifier.isStatic(methodToCall.getModifiers())) {
-                    Method getInstance = cls.getDeclaredMethod("getInstance");
-                    getInstance.setAccessible(true);
-                    instance = getInstance.invoke(null);
-                }
-            } catch (ClassNotFoundException e) {
-                DriverStation.reportError("Class not found: " + className + ". " + e.getMessage(), e.getStackTrace());
-            } catch (NoSuchMethodException e) {
-                DriverStation.reportError(
-                        "Could not find method : " + splitMethod[splitMethod.length - 1] + " in class " + className + ". " + e.getMessage(),
-                        e.getStackTrace());
-            } catch (InvocationTargetException | IllegalAccessException e) {
-                DriverStation.reportError("Could not get singleton reference in class " + className + " for method: " +
-                        splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e.getStackTrace());
+            } else {
+                instance = AutonomousContainer.getInstance().getAccessibleInstances().get(className);
             }
         }
 
@@ -124,14 +129,14 @@ public class SendableCommand {
     }
 
     @JsonIgnoreProperties
-    final @Nullable
-    Object instance;
+    @Nullable
+    private final Object instance;
 
     @JsonIgnoreProperties
-    final @Nullable
-    Method methodToCall;
+    @Nullable
+    private final Method methodToCall;
 
-    @JsonIgnoreProperties final Object @NotNull [] objArgs;
+    @JsonIgnoreProperties private final Object @NotNull [] objArgs;
 
     private static Class<?> getPrimitiveClass(Class<?> clazz) {
         if (clazz.equals(Integer.class)) {

@@ -1,33 +1,53 @@
 package com.dacubeking.AutoBuilder.robot.reflection;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
 
-//Contains data about a method to be able  to error checking on it.
-public final class ReflectionMethodData {
+/**
+ * Contains data about a method to be able to error checking on it.
+ */
+final class ReflectionMethodData {
 
-    public final @NotNull String methodName;
-    public final String @NotNull [] parameterTypes;
-    public final @NotNull String returnType;
-    public final int modifiers;
+    @JsonProperty
+    @NotNull
+    private final String methodName;
 
-    public ReflectionMethodData(@NotNull Method method) {
+    @JsonProperty private final String @NotNull [] parameterTypes;
+
+    @JsonProperty
+    @NotNull
+    private final String returnType;
+
+    @JsonProperty private final int modifiers;
+
+    ReflectionMethodData(@NotNull Method method) {
         this.methodName = method.getName();
-        this.parameterTypes = ReflectionUtils.getParameterTypes(method);
+        this.parameterTypes = getParameterTypes(method);
         this.returnType = method.getReturnType().getTypeName();
         this.modifiers = method.getModifiers();
     }
 
+    @JsonIgnore
+    private static String @NotNull [] getParameterTypes(@NotNull Method method) {
+        String[] parameterTypes = new String[method.getParameterCount()];
+        for (int i = 0; i < method.getParameterCount(); i++) {
+            parameterTypes[i] = method.getParameterTypes()[i].getName();
+        }
+        return parameterTypes;
+    }
+
     @Override
-    public @NotNull
-    String toString() {
+    public @NotNull String toString() {
         return "ReflectionMethodData{" +
                 "methodName='" + methodName + '\'' +
                 ", parameterTypes=" + Arrays.toString(parameterTypes) +
                 ", returnType='" + returnType + '\'' +
+                ", modifiers=" + modifiers +
                 '}';
     }
 }

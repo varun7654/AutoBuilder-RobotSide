@@ -1,20 +1,23 @@
 package com.dacubeking.AutoBuilder.robot.reflection;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-public final class ReflectionClassData {
-    public final @NotNull String fullName;
-    public final String @NotNull [] fieldNames;
-    public final String @NotNull [] fieldTypes;
-    public final ReflectionMethodData @NotNull [] methods;
-    public final int modifiers;
-    public final boolean isEnum;
+final class ReflectionClassData {
+    @JsonProperty
+    @NotNull
+    private final String fullName;
+    @JsonProperty private final String @NotNull [] fieldNames;
+    @JsonProperty private final String @NotNull [] fieldTypes;
+    @JsonProperty private final ReflectionMethodData @NotNull [] methods;
+    @JsonProperty private final int modifiers;
+    @JsonProperty private final boolean isEnum;
 
 
-    public ReflectionClassData(@NotNull Class clazz) {
+    ReflectionClassData(@NotNull Class<?> clazz) {
         this.fullName = clazz.getName();
         Method[] methods = clazz.getMethods();
         this.methods = new ReflectionMethodData[methods.length];

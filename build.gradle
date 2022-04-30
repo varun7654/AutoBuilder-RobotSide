@@ -18,7 +18,7 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-version = '0.0.1'
+version = '0.0.9'
 group = 'com.dacubeking'
 
 repositories {
@@ -41,6 +41,11 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     publications {
         myLibrary(MavenPublication) {
@@ -51,8 +56,15 @@ publishing {
     publishing {
         repositories {
             maven {
+                name = "releases"
                 credentials(PasswordCredentials)
                 url = uri("https://maven.dacubeking.com/releases/")
+            }
+
+            maven {
+                name = "snapshots"
+                credentials(PasswordCredentials)
+                url = uri("https://maven.dacubeking.com/snapshots/")
             }
         }
     }

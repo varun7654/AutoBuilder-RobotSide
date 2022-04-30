@@ -58,7 +58,7 @@ public final class AutonomousContainer {
 
         long startLoadingTime = System.currentTimeMillis();
 
-        findAutosAndLoadAutos(Filesystem.getDeployDirectory(), crashOnError);
+        findAutosAndLoadAutos(new File(Filesystem.getDeployDirectory().getAbsoluteFile() + "/autos"), crashOnError);
 
         blockedThread = Thread.currentThread();
         // Wait for all autos to be loaded
@@ -75,8 +75,10 @@ public final class AutonomousContainer {
                     "Not all autonomous files were successfully loaded");
         }
 
-        System.out.println("Successfully loaded " + autonomousList.size() + " autos with "
-                + (loadedAutosCount.get() - successfullyLoadedAutosCount.get()) + " failures in "
+        System.out.println("Successfully loaded " + autonomousList.size() + " auto"
+                + (autonomousList.size() == 1 ? "" : "s") + " with "
+                + (loadedAutosCount.get() - successfullyLoadedAutosCount.get()) +
+                " failure" + (loadedAutosCount.get() - successfullyLoadedAutosCount.get() == 1 ? "" : "s") + " in "
                 + ((double) (System.currentTimeMillis() - startLoadingTime)) / 1000 + "s");
     }
 
@@ -124,32 +126,31 @@ public final class AutonomousContainer {
 
 
     private void findAutosAndLoadAutos(File directory, boolean crashOnError) {
-        String[] autos = directory.list();
+        File[] autos = directory.listFiles();
         if (autos == null) {
             System.out.println("No autos files found");
         } else {
-            for (String stringFile : autos) {
-                File file = new File(Filesystem.getDeployDirectory(), stringFile);
+            for (File file : autos) {
                 if (file.isDirectory()) {
                     findAutosAndLoadAutos(file, crashOnError);
                     continue;
                 }
 
-                if (stringFile.endsWith(".json")) {
-                    if (stringFile.contains("NOTDEPLOYABLE")) {
-                        System.out.println("Skipping " + stringFile + " because it is marked as NOTDEPLOYABLE");
+                if (file.getName().endsWith(".json")) {
+                    if (file.getName().contains("NOTDEPLOYABLE")) {
+                        System.out.println("Skipping " + file.getAbsolutePath() + " because it is marked as NOTDEPLOYABLE");
                         if (crashOnError) throw new RuntimeException("An un-deployable file was found");
                         continue;
                     }
-                    printDebug("Found auto file: " + stringFile);
+                    printDebug("Found auto file: " + file.getAbsolutePath());
 
                     CompletableFuture.runAsync(() -> {
                         try {
-                            autonomousList.put(file.getAbsolutePath(), new GuiAuto(new File(stringFile)));
+                            autonomousList.put(file.getAbsolutePath(), new GuiAuto(file));
                             successfullyLoadedAutosCount.incrementAndGet();
                         } catch (IOException e) {
                             if (debugPrints) {
-                                DriverStation.reportError("Failed to deserialize auto. " + e.getLocalizedMessage(),
+                                DriverStation.reportError("Failed to deserialize auto: " + e.getLocalizedMessage(),
                                         e.getStackTrace());
                             }
                         }

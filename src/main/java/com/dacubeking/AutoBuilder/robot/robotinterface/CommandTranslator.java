@@ -12,7 +12,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
-@Internal
 public class CommandTranslator {
     protected final @NotNull Consumer<Trajectory> setNewTrajectory;
     protected final @NotNull Runnable stopRobot;
@@ -55,14 +54,17 @@ public class CommandTranslator {
         this.setRobotPose = setRobotPose;
     }
 
+    @Internal
     public void setNewTrajectory(@NotNull Trajectory trajectory) {
         setNewTrajectory.accept(trajectory);
     }
 
+    @Internal
     public void stopRobot() {
         stopRobot.run();
     }
 
+    @Internal
     public void setAutonomousRotation(@NotNull Rotation2d rotation) {
         if (AutonomousContainer.getInstance().isHolonomic()) {
             assert setAutonomousRotation != null;
@@ -70,14 +72,17 @@ public class CommandTranslator {
         }
     }
 
+    @Internal
     public boolean isTrajectoryDone() {
         return isTrajectoryDone.getAsBoolean();
     }
 
+    @Internal
     public double getTrajectoryElapsedTime() {
         return getTrajectoryElapsedTime.getAsDouble();
     }
 
+    @Internal
     public void setRobotPose(@NotNull Pose2d pose) {
         setRobotPose.accept(pose);
     }

@@ -3,16 +3,15 @@ package com.dacubeking.AutoBuilder.robot.reflection;
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.dacubeking.AutoBuilder.robot.serialization.Serializer;
 import com.dacubeking.AutoBuilder.robot.utility.OsUtil;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public final class ClassInformationSender {
@@ -24,27 +23,17 @@ public final class ClassInformationSender {
     public static void updateReflectionInformation(@Nullable File file, @NotNull String packageName) {
         try {
             AutonomousContainer.getInstance().isInitialized();
-            Reflections reflections = new Reflections(packageName, Scanners.SubTypes.filterResultsBy(s -> true));
+
+            Set<ClassInfo> classInfos = ClassPath.from(Thread.currentThread().getContextClassLoader()).getTopLevelClasses();
+
             Set<Class<?>> classes = new HashSet<>();
-
-
-            HashMap<String, Map<String, Set<String>>> store = reflections.getStore();
-            for (Map<String, Set<String>> value : store.values()) {
-                for (Set<String> discoveredClasses : value.values()) {
-                    for (String discoveredClass : discoveredClasses) {
-                        if (discoveredClass.contains(packageName)) {
-                            try {
-                                classes.add(Class.forName(discoveredClass));
-                            } catch (ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
+            for (ClassInfo classInfo : classInfos) {
+                if (classInfo.getPackageName().startsWith(packageName)) {
+                    Class<?> clazz = classInfo.load();
+                    classes.addAll(Arrays.asList(clazz.getDeclaredClasses()));
+                    classes.add(clazz);
                 }
             }
-
-            System.out.println("Store Map: " + reflections.getStore());
-            System.out.println("Classes: " + classes);
 
             ReflectionClassDataList reflectionClassDataList = new ReflectionClassDataList();
             for (Class<?> aClass : classes) {
@@ -53,8 +42,8 @@ public final class ClassInformationSender {
 
             reflectionClassDataList.instanceLocations.addAll(AutonomousContainer.getInstance().getAccessibleInstances().keySet());
 
-            System.out.println(reflectionClassDataList.instanceLocations);
-
+            System.out.println("Found " + reflectionClassDataList.reflectionClassData.size() + " classes with "
+                    + reflectionClassDataList.instanceLocations.size() + " defined instances found.");
 
             if (file != null) {
                 file.getParentFile().mkdir();

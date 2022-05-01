@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
@@ -19,6 +22,7 @@ public class CommandTranslator {
     private final @NotNull BooleanSupplier isTrajectoryDone;
     private final @NotNull DoubleSupplier getTrajectoryElapsedTime;
     private final Consumer<Pose2d> setRobotPose;
+    @Internal public final boolean runOnMainThread;
 
     /**
      * @param setNewTrajectory         The consumer to call to set the new trajectory
@@ -38,7 +42,8 @@ public class CommandTranslator {
             @Nullable Consumer<Rotation2d> setAutonomousRotation,
             @NotNull BooleanSupplier isTrajectoryDone,
             @NotNull DoubleSupplier getTrajectoryElapsedTime,
-            @NotNull Consumer<Pose2d> setRobotPose
+            @NotNull Consumer<Pose2d> setRobotPose,
+            boolean runOnMainThread
     ) {
         Preconditions.checkArgument(setNewTrajectory != null, "setNewTrajectory cannot be null");
         Preconditions.checkArgument(stopRobot != null, "stopRobot cannot be null");
@@ -52,38 +57,81 @@ public class CommandTranslator {
         this.isTrajectoryDone = isTrajectoryDone;
         this.getTrajectoryElapsedTime = getTrajectoryElapsedTime;
         this.setRobotPose = setRobotPose;
+        this.runOnMainThread = runOnMainThread;
     }
+
+    private final @NotNull ConcurrentLinkedQueue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
 
     @Internal
     public void setNewTrajectory(@NotNull Trajectory trajectory) {
-        setNewTrajectory.accept(trajectory);
+        if (runOnMainThread) {
+            commandQueue.add(() -> setNewTrajectory.accept(trajectory));
+        } else {
+            setNewTrajectory.accept(trajectory);
+        }
     }
 
     @Internal
     public void stopRobot() {
-        stopRobot.run();
+        if (runOnMainThread) {
+            commandQueue.add(stopRobot);
+        } else {
+            stopRobot.run();
+        }
     }
 
     @Internal
     public void setAutonomousRotation(@NotNull Rotation2d rotation) {
         if (AutonomousContainer.getInstance().isHolonomic()) {
             assert setAutonomousRotation != null;
-            setAutonomousRotation.accept(rotation);
+            if (runOnMainThread) {
+                commandQueue.add(() -> setAutonomousRotation.accept(rotation));
+            } else {
+                setAutonomousRotation.accept(rotation);
+            }
         }
     }
 
     @Internal
-    public boolean isTrajectoryDone() {
-        return isTrajectoryDone.getAsBoolean();
-    }
-
-    @Internal
-    public double getTrajectoryElapsedTime() {
-        return getTrajectoryElapsedTime.getAsDouble();
-    }
-
-    @Internal
     public void setRobotPose(@NotNull Pose2d pose) {
-        setRobotPose.accept(pose);
+        if (runOnMainThread) {
+            commandQueue.add(() -> setRobotPose.accept(pose));
+        } else {
+            setRobotPose.accept(pose);
+        }
+    }
+
+    @Internal
+    public boolean isTrajectoryDone() throws ExecutionException, InterruptedException {
+        if (runOnMainThread) {
+            CompletableFuture<Boolean> future = new CompletableFuture<>();
+            commandQueue.add(() -> future.complete(isTrajectoryDone.getAsBoolean()));
+            return future.get();
+        } else {
+            return isTrajectoryDone.getAsBoolean();
+        }
+    }
+
+    @Internal
+    public double getTrajectoryElapsedTime() throws ExecutionException, InterruptedException {
+        if (runOnMainThread) {
+            CompletableFuture<Double> future = new CompletableFuture<>();
+            commandQueue.add(() -> future.complete(getTrajectoryElapsedTime.getAsDouble()));
+            return future.get();
+        } else {
+            return getTrajectoryElapsedTime.getAsDouble();
+        }
+    }
+
+    @Internal
+    public void runOnMainThread(@NotNull Runnable runnable) {
+        commandQueue.add(runnable);
+    }
+
+    @Internal
+    protected void onPeriodic() {
+        while (!commandQueue.isEmpty()) {
+            commandQueue.poll().run();
+        }
     }
 }

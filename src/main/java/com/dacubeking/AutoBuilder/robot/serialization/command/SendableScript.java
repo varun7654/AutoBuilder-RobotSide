@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -17,7 +18,7 @@ public class SendableScript implements Comparable<SendableScript> {
     /**
      * @throws InterruptedException if the thread is interrupted while executing the commands
      */
-    public void execute() throws InterruptedException, CommandExecutionFailedException {
+    public void execute() throws InterruptedException, CommandExecutionFailedException, ExecutionException {
         for (SendableCommand command : commands) {
             if (Thread.interrupted()) throw new InterruptedException("Interrupted while trying to execute a script ");
             command.execute();

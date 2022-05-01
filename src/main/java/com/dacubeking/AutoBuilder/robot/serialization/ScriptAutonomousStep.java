@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -37,7 +38,7 @@ public class ScriptAutonomousStep extends AbstractAutonomousStep {
     @Override
     public void execute(@NotNull List<SendableScript> scriptsToExecuteByTime,
                         @NotNull List<SendableScript> scriptsToExecuteByPercent)
-            throws InterruptedException, CommandExecutionFailedException {
+            throws InterruptedException, CommandExecutionFailedException, ExecutionException {
 
         if (sendableScript.getDelayType() == SendableScript.DelayType.TIME) {
             scriptsToExecuteByTime.add(sendableScript);

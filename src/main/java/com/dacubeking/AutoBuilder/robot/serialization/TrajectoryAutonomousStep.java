@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
@@ -38,7 +39,7 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
     @Override
     public void execute(@NotNull List<SendableScript> scriptsToExecuteByTime,
                         @NotNull List<SendableScript> scriptsToExecuteByPercent)
-            throws InterruptedException, CommandExecutionFailedException {
+            throws InterruptedException, CommandExecutionFailedException, ExecutionException {
         //Sort the lists to make sure they are sorted by time
         Collections.sort(scriptsToExecuteByTime);
         Collections.sort(scriptsToExecuteByPercent);
@@ -70,7 +71,6 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
                 scriptsToExecuteByPercent.get(0).execute();
                 scriptsToExecuteByPercent.remove(0);
             }
-
             //noinspection BusyWait
             Thread.sleep(10); // Throws an exception to exit if Interrupted
         }

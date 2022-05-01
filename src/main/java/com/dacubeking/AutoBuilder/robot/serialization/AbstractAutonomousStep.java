@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -25,5 +26,5 @@ public abstract class AbstractAutonomousStep {
     }
 
     public abstract void execute(List<SendableScript> scriptsToExecuteByTime,
-                                 List<SendableScript> scriptsToExecuteByPercent) throws InterruptedException, CommandExecutionFailedException;
+                                 List<SendableScript> scriptsToExecuteByPercent) throws InterruptedException, CommandExecutionFailedException, ExecutionException;
 }

@@ -4,6 +4,7 @@ import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import edu.wpi.first.wpilibj.DriverStation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,11 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+
+import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SendableCommand {
@@ -167,15 +172,58 @@ public class SendableCommand {
      * @throws InterruptedException            If the command fails do to an interrupt
      * @throws CommandExecutionFailedException If the command fails to execute for any other reason
      */
-    public void execute() throws InterruptedException, CommandExecutionFailedException {
+    public void execute() throws InterruptedException, CommandExecutionFailedException, ExecutionException {
         if (methodToCall == null && reflection) {
             CommandExecutionFailedException e = new CommandExecutionFailedException("Method to call is null");
             e.fillInStackTrace();
             throw e;
         }
+        if (getCommandTranslator().runOnMainThread) {
+            while (true) {
+                CompletableFuture<Object> future = new CompletableFuture<>();
+                getCommandTranslator().runOnMainThread(() -> {
+                    try {
+                        future.complete(invokeMethod());
+                    } catch (CommandExecutionFailedException | InterruptedException e) {
+                        future.complete(new UncheckedExecutionException(e));
+                    }
+                });
+
+                Object result = future.get();
+
+                if (result instanceof UncheckedExecutionException) {
+                    Throwable exception = ((UncheckedExecutionException) result).getCause();
+                    if (exception instanceof InterruptedException) {
+                        throw (InterruptedException) exception;
+                    } else if (exception instanceof CommandExecutionFailedException) {
+                        throw (CommandExecutionFailedException) exception;
+                    } else {
+                        throw new CommandExecutionFailedException(
+                                "Unexpected Exception. Please report this: " + exception.getMessage(), exception);
+                    }
+                }
+
+                if (!(result instanceof Boolean) || result.equals(true)) break;
+                //Keep executing the method if it returns false
+                //noinspection BusyWait
+                Thread.sleep(20);
+            }
+        } else {
+            while (true) {
+                Object result = invokeMethod();
+                if (!(result instanceof Boolean) || result.equals(true)) break;
+                //Keep executing the method if it returns false
+                //noinspection BusyWait
+                Thread.sleep(20);
+            }
+        }
+    }
+
+    private @Nullable Object invokeMethod() throws InterruptedException, CommandExecutionFailedException {
         try {
             if (reflection) {
-                methodToCall.invoke(instance, objArgs);
+                assert methodToCall != null;
+                return methodToCall.invoke(instance, objArgs);
             } else {
                 switch (methodName) {
                     case "print":
@@ -185,6 +233,7 @@ public class SendableCommand {
                         Thread.sleep((long) objArgs[0]);
                         break;
                 }
+                return null;
             }
         } catch (InterruptedException e) {
             throw new InterruptedException("Interrupted while executing a script");

@@ -18,7 +18,7 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
     private final @NotNull Trajectory trajectory;
-    private final List<TimedRotation> rotations;
+    private final @NotNull List<TimedRotation> rotations;
 
     @JsonCreator
     public TrajectoryAutonomousStep(@JsonProperty(required = true, value = "states") List<State> states,
@@ -32,7 +32,7 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         return trajectory;
     }
 
-    public List<TimedRotation> getRotations() {
+    public @NotNull List<TimedRotation> getRotations() {
         return rotations;
     }
 
@@ -44,29 +44,31 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         Collections.sort(scriptsToExecuteByTime);
         Collections.sort(scriptsToExecuteByPercent);
 
-        //
-        getCommandTranslator().setAutonomousRotation(rotations.get(0).rotation);
+        if (rotations.size() > 0) {
+            //Scripts for non-holonomic won't have any rotations (since the rotation is based on the driven path)
+            getCommandTranslator().setAutonomousRotation(rotations.get(0).rotation);
+        }
         getCommandTranslator().setNewTrajectory(trajectory); //Send the auto to our drive class to be executed
-        getCommandTranslator().setAutonomousRotation(rotations.get(0).rotation);
 
         int rotationIndex = 1; // Start at the second rotation (the first is the starting rotation)
         while (!getCommandTranslator().isTrajectoryDone()) { // Wait till the auto is done
-            if (rotationIndex < rotations.size() &&
-                    getCommandTranslator().getTrajectoryElapsedTime() > rotations.get(rotationIndex).time) {
+            final double elapsedTime = getCommandTranslator().getTrajectoryElapsedTime();
+
+            if (rotationIndex < rotations.size() && elapsedTime > rotations.get(rotationIndex).time) {
                 // We've passed the time for the next rotation
                 getCommandTranslator().setAutonomousRotation(rotations.get(rotationIndex).rotation); //Set the rotation
                 rotationIndex++; // Increment the rotation index
             }
 
-            if (!scriptsToExecuteByTime.isEmpty() &&
-                    scriptsToExecuteByTime.get(0).getDelay() <= getCommandTranslator().getTrajectoryElapsedTime()) {
+            if (!scriptsToExecuteByTime.isEmpty()
+                    && scriptsToExecuteByTime.get(0).getDelay() <= elapsedTime) {
                 // We have a script to execute, and it is time to execute it
                 scriptsToExecuteByTime.get(0).execute();
                 scriptsToExecuteByTime.remove(0);
             }
 
-            if (!scriptsToExecuteByPercent.isEmpty() && scriptsToExecuteByPercent.get(0).getDelay() <=
-                    (getCommandTranslator().getTrajectoryElapsedTime() / trajectory.getTotalTimeSeconds())) {
+            if (!scriptsToExecuteByPercent.isEmpty()
+                    && scriptsToExecuteByPercent.get(0).getDelay() <= elapsedTime / trajectory.getTotalTimeSeconds()) {
                 // We have a script to execute, and it is time to execute it
                 scriptsToExecuteByPercent.get(0).execute();
                 scriptsToExecuteByPercent.remove(0);

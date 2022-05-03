@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
@@ -103,7 +104,7 @@ public class GuiAuto implements Runnable {
                     e.printStackTrace();
                 }
                 return;
-            } catch (CommandExecutionFailedException e) {
+            } catch (CommandExecutionFailedException | ExecutionException e) {
                 getCommandTranslator().stopRobot();
                 e.printStackTrace(); // We should always print this out since it is a fatal error
                 return;

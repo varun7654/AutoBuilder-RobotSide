@@ -11,6 +11,9 @@ public class NetworkAuto extends GuiAuto {
     static final @NotNull NetworkTable table = instance.getTable("autodata");
     static final @NotNull NetworkTableEntry autoPath = table.getEntry("autoPath");
 
+    /**
+     * Deserializes an auto form a NT entry.
+     */
     public NetworkAuto() {
         super(autoPath.getString(null));
     }

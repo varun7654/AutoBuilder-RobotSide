@@ -5,43 +5,43 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.wpi.first.math.geometry.Rotation2d;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Internal
 public final class TimedRotation {
-    @JsonProperty("time")
-    public double time;
+    @JsonProperty("time") double time;
 
-    @JsonProperty("rotation")
-    public Rotation2d rotation;
+    @JsonProperty("rotation") Rotation2d rotation;
 
     @JsonIgnore
-    public TimedRotation() {
+    private TimedRotation() {
         this(0, new Rotation2d());
     }
 
     @JsonIgnore
-    public TimedRotation(Rotation2d rotation) {
+    private TimedRotation(Rotation2d rotation) {
         this(0, rotation);
     }
 
     @JsonCreator
-    public TimedRotation(@JsonProperty("time") double time,
-                         @JsonProperty("rotation") Rotation2d rotation) {
+    private TimedRotation(@JsonProperty("time") double time,
+                          @JsonProperty("rotation") Rotation2d rotation) {
         this.time = time;
         this.rotation = rotation;
     }
 
     @JsonIgnore
-    public TimedRotation(@NotNull TimedRotation other) {
+    private TimedRotation(@NotNull TimedRotation other) {
         this(other.time, other.rotation);
     }
 
     @JsonIgnore
     @Contract(value = " -> new", pure = true)
     @NotNull
-    public TimedRotation copy() {
+    TimedRotation copy() {
         return new TimedRotation(this);
     }
 

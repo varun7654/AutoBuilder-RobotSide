@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.Trajectory.State;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -16,19 +17,20 @@ import java.util.concurrent.ExecutionException;
 import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Internal
 public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
     private final @NotNull Trajectory trajectory;
     private final @NotNull List<TimedRotation> rotations;
 
     @JsonCreator
-    public TrajectoryAutonomousStep(@JsonProperty(required = true, value = "states") List<State> states,
-                                    @JsonProperty(required = true, value = "rotations") List<TimedRotation> rotations) {
+    private TrajectoryAutonomousStep(@JsonProperty(required = true, value = "states") @NotNull List<State> states,
+                                     @JsonProperty(required = true, value = "rotations") @NotNull List<TimedRotation> rotations) {
         this.trajectory = new Trajectory(states);
         this.rotations = rotations;
     }
 
-    public @NotNull
-    Trajectory getTrajectory() {
+    @NotNull
+    public Trajectory getTrajectory() {
         return trajectory;
     }
 
@@ -36,6 +38,15 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         return rotations;
     }
 
+    /**
+     * Executes the trajectory
+     *
+     * @param scriptsToExecuteByTime    An arraylist of the scripts to run during this path.
+     * @param scriptsToExecuteByPercent An arraylist of the scripts to run during this path.
+     * @throws InterruptedException            If the thread is interrupted (ex: the auto is killed).
+     * @throws CommandExecutionFailedException If a script fails to execute.
+     * @throws ExecutionException              Something goes wrong running a command on the main thread.
+     */
     @Override
     public void execute(@NotNull List<SendableScript> scriptsToExecuteByTime,
                         @NotNull List<SendableScript> scriptsToExecuteByPercent)

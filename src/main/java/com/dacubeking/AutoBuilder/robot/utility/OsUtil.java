@@ -38,7 +38,7 @@ public class OsUtil {
     }
 
     public static String getUserConfigDirectory(String applicationName) {
-        String CONFIG_HOME = null;
+        String CONFIG_HOME;
 
         if ((CONFIG_HOME = System.getenv("XDG_CONFIG_HOME")) == null) {
             if (isLinux || isAndroid) {

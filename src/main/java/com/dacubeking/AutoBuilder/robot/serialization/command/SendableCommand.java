@@ -22,11 +22,11 @@ import java.util.function.Function;
 import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer.getCommandTranslator;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SendableCommand {
+class SendableCommand {
 
     @JsonProperty("methodName")
-    public final @NotNull
-    String methodName;
+    @NotNull
+    protected final String methodName;
 
     @JsonProperty("args") public final String @NotNull [] args;
 
@@ -58,10 +58,10 @@ public class SendableCommand {
     }
 
     @JsonCreator
-    public SendableCommand(@JsonProperty("methodName") @NotNull String methodName,
-                           @JsonProperty("args") String @NotNull [] args,
-                           @JsonProperty("argTypes") String[] argTypes,
-                           @JsonProperty("reflection") boolean reflection) {
+    protected SendableCommand(@JsonProperty("methodName") @NotNull String methodName,
+                              @JsonProperty("args") String @NotNull [] args,
+                              @JsonProperty("argTypes") String[] argTypes,
+                              @JsonProperty("reflection") boolean reflection) {
         Method methodToCall = null;
         Object instance = null;
 
@@ -171,8 +171,10 @@ public class SendableCommand {
     /**
      * @throws InterruptedException            If the command fails do to an interrupt
      * @throws CommandExecutionFailedException If the command fails to execute for any other reason
+     * @throws ExecutionException              Should never happen (for some reason the future was cancelled or threw and
+     *                                         exception)
      */
-    public void execute() throws InterruptedException, CommandExecutionFailedException, ExecutionException {
+    protected void execute() throws InterruptedException, CommandExecutionFailedException, ExecutionException {
         if (methodToCall == null && reflection) {
             CommandExecutionFailedException e = new CommandExecutionFailedException("Method to call is null");
             e.fillInStackTrace();

@@ -5,6 +5,7 @@ import com.dacubeking.AutoBuilder.robot.serialization.command.SendableScript;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,23 +13,24 @@ import java.util.concurrent.ExecutionException;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Internal
 public class ScriptAutonomousStep extends AbstractAutonomousStep {
 
     private final SendableScript sendableScript;
 
     @JsonCreator
-    public ScriptAutonomousStep(@JsonProperty(required = true, value = "sendableScript") SendableScript sendableScript) {
+    private ScriptAutonomousStep(@JsonProperty(required = true, value = "sendableScript") SendableScript sendableScript) {
         this.sendableScript = sendableScript;
     }
 
     @Override
-    public @NotNull
-    String toString() {
+    @NotNull
+    public String toString() {
         return "ScriptAutonomousStep{" + "sendableScript='" + sendableScript + '\'' + '}';
     }
 
     @JsonProperty
-    public SendableScript getSendableScript() {
+    private SendableScript getSendableScript() {
         return sendableScript;
     }
 
@@ -49,7 +51,6 @@ public class ScriptAutonomousStep extends AbstractAutonomousStep {
             scriptsToExecuteByPercent.add(sendableScript);
             return;
         }
-
 
         sendableScript.execute();
     }

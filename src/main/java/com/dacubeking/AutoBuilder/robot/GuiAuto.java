@@ -23,7 +23,7 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 public class GuiAuto implements Runnable {
 
     private Autonomous autonomous;
-    Pose2d initialPose;
+    private Pose2d initialPose;
 
     /**
      * Ensure you are creating the objects for your auto on robot init. The roborio will take multiple seconds to initialize the
@@ -51,19 +51,24 @@ public class GuiAuto implements Runnable {
         init();
     }
 
+    /**
+     * Finds and saves the initial pose of the robot.
+     */
     private void init() {
-        //Find and save the initial pose
         for (AbstractAutonomousStep autonomousStep : autonomous.getAutonomousSteps()) {
             if (autonomousStep instanceof TrajectoryAutonomousStep) {
                 TrajectoryAutonomousStep trajectoryAutonomousStep = (TrajectoryAutonomousStep) autonomousStep;
                 Trajectory.State initialState = trajectoryAutonomousStep.getTrajectory().getStates().get(0);
                 initialPose = new Pose2d(initialState.poseMeters.getTranslation(),
-                        trajectoryAutonomousStep.getRotations().get(0).rotation);
+                        trajectoryAutonomousStep.getRotations().get(0).getRotation());
                 break;
             }
         }
     }
 
+    /**
+     * Runs the autonomous.
+     */
     @Override
     public void run() {
         AutonomousContainer.getInstance().isInitialized();

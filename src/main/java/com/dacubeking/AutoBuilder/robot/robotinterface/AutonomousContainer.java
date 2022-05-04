@@ -185,6 +185,13 @@ public final class AutonomousContainer {
     }
 
 
+    /**
+     * Recursively finds all autonomous files in the given directory and loads them.
+     *
+     * @param directory    The directory to search in.
+     * @param crashOnError Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash.
+     *                     If this is disabled, the robot will skip the invalid auto and continue to the next one.
+     */
     private synchronized void findAutosAndLoadAutos(File directory, boolean crashOnError) {
         File[] autos = directory.listFiles();
         if (autos == null) {
@@ -224,7 +231,7 @@ public final class AutonomousContainer {
     private int numAutonomousFiles = 0;
     private final AtomicInteger successfullyLoadedAutosCount = new AtomicInteger(0);
     private final AtomicInteger loadedAutosCount = new AtomicInteger(0);
-    @Nullable Thread blockedThread = null;
+    @Nullable private Thread blockedThread = null;
 
     private void incrementLoadedAutos() {
         loadedAutosCount.incrementAndGet();

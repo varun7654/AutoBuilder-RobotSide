@@ -30,7 +30,8 @@ public class CommandTranslator {
      * @param setAutonomousRotation    The consumer to call to set the autonomous rotation (can be null is the robot is not
      *                                 holonomic)
      * @param isTrajectoryDone         The boolean supplier to call to check if the trajectory is done. This lambada should return
-     *                                 false
+     *                                 false until the path has been fully (and is within error of the final position/rotation)
+     *                                 driven.
      * @param getTrajectoryElapsedTime The double supplier to call to get the elapsed time of the trajectory. This lambada must
      *                                 return 0.0 immediately after a new trajectory is set and should return the elapsed time of
      *                                 the current trajectory that is being driven.

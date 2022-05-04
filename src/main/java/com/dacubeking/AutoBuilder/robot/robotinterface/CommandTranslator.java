@@ -36,6 +36,11 @@ public class CommandTranslator {
      *                                 return 0.0 immediately after a new trajectory is set and should return the elapsed time of
      *                                 the current trajectory that is being driven.
      * @param setRobotPose             The consumer to call to set the initial pose of the robot at the start of autonomous
+     * @param runOnMainThread          Whether to run the commands on the main thread. If this is ture, the commands will be run
+     *                                 on the main thread. If this is false, the commands will be run on the autonomous thread. If
+     *                                 you are unsure, it is safer to leave this as true. If you've designed your robot code to be
+     *                                 thread safe, you can set this to false. It will allow the methods you call to be blocking
+     *                                 which can simplify some code.
      */
     public CommandTranslator(
             @NotNull Consumer<Trajectory> setNewTrajectory,

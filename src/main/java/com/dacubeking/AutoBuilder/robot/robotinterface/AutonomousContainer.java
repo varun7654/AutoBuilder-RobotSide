@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -288,6 +289,13 @@ public final class AutonomousContainer {
             names.add(splitFilePath[splitFilePath.length - 1].replace(".json", ""));
         }
         return names;
+    }
+
+    /**
+     * @return A list of the absolute paths of all the autos that have been loaded.
+     */
+    public synchronized Set<String> getAbsoluteAutonomousPaths() {
+        return autonomousList.keySet();
     }
 
     /**

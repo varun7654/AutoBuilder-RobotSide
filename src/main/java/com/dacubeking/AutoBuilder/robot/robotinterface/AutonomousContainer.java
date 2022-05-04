@@ -35,9 +35,7 @@ public final class AutonomousContainer {
     private final @NotNull NetworkTableInstance instance = NetworkTableInstance.getDefault();
     private final @NotNull NetworkTable autoDataTable = instance.getTable("autodata");
     private final @NotNull NetworkTableEntry autoPath = autoDataTable.getEntry("autoPath");
-    private final @NotNull NetworkTableEntry enabled = autoDataTable.getEntry("enabled");
     private final @NotNull NetworkTableEntry pathProcessingStatusEntry = autoDataTable.getEntry("processing");
-    private final @NotNull NetworkTableEntry pathProcessingStatusIdEntry = autoDataTable.getEntry("processingid");
 
     private final @NotNull Lock networkAutoLock = new ReentrantLock();
     private @Nullable NetworkAuto networkAuto = null;
@@ -98,7 +96,6 @@ public final class AutonomousContainer {
                             System.out.println("Starting to Parse Network Autonomous");
                             //Set networktable entries for the gui notifications
                             pathProcessingStatusEntry.setDouble(1);
-                            pathProcessingStatusIdEntry.setDouble(pathProcessingStatusIdEntry.getDouble(0) + 1);
                             networkAutoLock.lock();
                             try {
                                 networkAuto = new NetworkAuto(); //Create the auto object which will start deserializing the json and the auto
@@ -110,7 +107,6 @@ public final class AutonomousContainer {
                             System.out.println("Done Parsing Network Autonomous");
                             //Set networktable entries for the gui notifications
                             pathProcessingStatusEntry.setDouble(2);
-                            pathProcessingStatusIdEntry.setDouble(pathProcessingStatusIdEntry.getDouble(0) + 1);
                         }
                 ), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate | EntryListenerFlags.kImmediate);
 
@@ -311,7 +307,7 @@ public final class AutonomousContainer {
      */
     public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
         networkAutoLock.lock();
-        @Nullable GuiAuto selectedAuto = null;
+        @Nullable GuiAuto selectedAuto;
         try {
             if (allowRunningNetworkAuto && networkAuto != null) {
                 selectedAuto = networkAuto;
@@ -347,7 +343,6 @@ public final class AutonomousContainer {
             autoThread.start();
         }
     }
-
 
     /**
      * Kills the currently running autonomous.

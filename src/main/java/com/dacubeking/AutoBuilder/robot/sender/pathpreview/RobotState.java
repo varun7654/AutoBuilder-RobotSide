@@ -194,6 +194,32 @@ public class RobotState {
         this(pose.getX(), pose.getY(), pose.getRotation().getRadians(), time);
     }
 
+    /**
+     * Constructs a new RobotState.
+     *
+     * @param x     The x position (meters).
+     * @param y     The y position (meters).
+     * @param theta The angle (radians).
+     * @param time  Timestamp of this position.
+     * @param name  name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
+     *              that is plotted in the GUI)
+     */
+    public RobotState(double x, double y, double theta, double time, String name) {
+        this(x, y, theta, 0, 0, 0, time, name);
+    }
+
+    /**
+     * Constructs a new RobotState.
+     *
+     * @param pose The pose of the robot.
+     * @param time Timestamp of this position.
+     * @param name name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
+     *             that is plotted in the GUI)
+     */
+    public RobotState(Pose2d pose, double time, String name) {
+        this(pose.getX(), pose.getY(), pose.getRotation().getRadians(), time, name);
+    }
+
 
     @Override
     public String toString() {

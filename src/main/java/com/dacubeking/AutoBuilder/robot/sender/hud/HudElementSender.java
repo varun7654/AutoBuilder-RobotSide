@@ -4,25 +4,31 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-public final class HudElementSender {
+class HudElementSender {
     private static final @NotNull NetworkTableEntry hudElementsEntry = NetworkTableInstance.getDefault()
             .getEntry("autodata.hudElements");
 
-    private static Set<HudElement> hudElements = new HashSet<>();
+    private static final ConcurrentHashMap<HudElement, String> hudElements = new ConcurrentHashMap<>();
 
     /**
      * Adds/updates a hud element on the GUI.
      *
      * @param element The hud element to add/update.
      */
-    public static void send(@NotNull HudElement element) {
-        hudElements.add(element);
+    protected static void send(@NotNull HudElement element) {
+        hudElements.put(element, element.toString());
+        send();
+    }
+
+    /**
+     * Sends all hud elements to the GUI.
+     */
+    protected static void send() {
         StringBuilder sb = new StringBuilder();
-        for (HudElement hudElement : hudElements) {
-            sb.append(hudElement.toString()).append(";");
+        for (String hudElement : hudElements.values()) {
+            sb.append(hudElement).append(";");
         }
         hudElementsEntry.setString(sb.toString());
     }

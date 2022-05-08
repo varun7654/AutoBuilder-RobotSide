@@ -39,6 +39,9 @@ public class HudElement {
     }
 
     public HudElement setColor(@NotNull Color8Bit color) {
+        if (this.color.equals(color)) {
+            return this;
+        }
         this.color = color;
         dirty = true;
         return this;
@@ -49,6 +52,9 @@ public class HudElement {
     }
 
     public HudElement setEntry(@NotNull NetworkTableEntry entry) {
+        if (this.entry.getName().equals(entry.getName())) {
+            return this;
+        }
         this.entry = entry;
         dirty = true;
         return this;
@@ -59,6 +65,9 @@ public class HudElement {
     }
 
     public HudElement setLabel(@NotNull String label) {
+        if (this.label.equals(label)) {
+            return this;
+        }
         this.label = label;
         dirty = true;
         return this;
@@ -69,6 +78,9 @@ public class HudElement {
     }
 
     public HudElement setWidth(float width) {
+        if (this.width == width) {
+            return this;
+        }
         this.width = width;
         dirty = true;
         return this;
@@ -79,6 +91,9 @@ public class HudElement {
     }
 
     public HudElement setDecimalFormat(@NotNull DecimalFormat decimalFormat) {
+        if (this.decimalFormat.equals(decimalFormat)) {
+            return this;
+        }
         this.decimalFormat = decimalFormat;
         dirty = true;
         return this;

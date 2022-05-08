@@ -26,6 +26,14 @@ public final class ClassInformationSender {
         updateReflectionInformation(new File(OsUtil.getUserConfigDirectory("AutoBuilder") + "/robotCodeData.json"), packageName);
     }
 
+    /**
+     * Gets information about your robot code for the AutoBuilder Gui to use. This includes the names of all the classes, their
+     * methods, their parameters and more. Also saves this data in a json file for the AutoBuilder Gui to use.
+     *
+     * @param file        The file to save the data to. (Use {@link #updateReflectionInformation(String)} to save to the default
+     *                    file)
+     * @param packageName The package name of your robot code. (it will recursively search the packages for all classes)
+     */
     public static void updateReflectionInformation(@Nullable File file, @NotNull String packageName) {
         try {
             AutonomousContainer.getInstance().isInitialized();

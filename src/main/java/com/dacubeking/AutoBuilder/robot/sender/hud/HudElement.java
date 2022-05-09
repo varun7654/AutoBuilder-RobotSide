@@ -20,7 +20,7 @@ public class HudElement {
     private @NotNull NetworkTableEntry entry;
     private @NotNull String label;
 
-    float width;
+    private float width;
 
     private @NotNull DecimalFormat decimalFormat;
 

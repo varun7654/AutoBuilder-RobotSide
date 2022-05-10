@@ -1,5 +1,6 @@
 package com.dacubeking.AutoBuilder.robot.sender.hud;
 
+import com.dacubeking.AutoBuilder.robot.utility.Utils;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import org.jetbrains.annotations.NotNull;
@@ -99,10 +100,6 @@ public class HudElement {
         return this;
     }
 
-    public String getColorAsHex() {
-        return String.format("#%02x%02x%02x", color.red, color.green, color.blue);
-    }
-
     /**
      * Publishes the hud element to the network table to be displayed on the GUI.
      */
@@ -115,6 +112,6 @@ public class HudElement {
 
     @Override
     public String toString() {
-        return entry.getName() + "," + label + "," + getColorAsHex() + "," + width + "," + decimalFormat.toPattern();
+        return entry.getName() + "," + label + "," + Utils.getColorAsHex(color) + "," + width + "," + decimalFormat.toPattern();
     }
 }

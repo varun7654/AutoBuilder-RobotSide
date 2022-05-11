@@ -510,7 +510,8 @@ public class Vector2 implements Serializable {
     }
 
     /**
-     * Rotates the Vector2 by 90 degrees in the specified direction, where >= 0 is counter-clockwise and < 0 is clockwise.
+     * Rotates the Vector2 by 90 degrees in the specified direction, where >= 0 is counter-clockwise and {@literal <} 0 is
+     * clockwise.
      */
     public Vector2 rotate90(int dir) {
         float x = this.x;

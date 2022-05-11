@@ -68,6 +68,7 @@ public final class AutonomousContainer {
      * @param timedRobot        The timed robot to use to create the period function for the autos. This can be null if you're
      *                          running autos completely asynchronously.
      */
+    @SuppressWarnings("unused")
     public synchronized void initialize(
             boolean isHolonomic,
             @NotNull CommandTranslator commandTranslator,
@@ -270,6 +271,7 @@ public final class AutonomousContainer {
         return parentObjects;
     }
 
+    @SuppressWarnings("unused")
     public synchronized void setDebugPrints(boolean debugPrints) {
         this.debugPrints = debugPrints;
     }
@@ -278,6 +280,7 @@ public final class AutonomousContainer {
     /**
      * @return A list of the names of all the autos that have been loaded. The name is the name of the file, without the .json
      */
+    @SuppressWarnings("unused")
     public synchronized ArrayList<String> getAutonomousNames() {
         ArrayList<String> names = new ArrayList<>(autonomousList.size());
         for (String absoluteFilePath : autonomousList.keySet()) {
@@ -290,6 +293,7 @@ public final class AutonomousContainer {
     /**
      * @return A list of the absolute paths of all the autos that have been loaded.
      */
+    @SuppressWarnings("unused")
     public synchronized Set<String> getAbsoluteAutonomousPaths() {
         return autonomousList.keySet();
     }
@@ -305,9 +309,10 @@ public final class AutonomousContainer {
      * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
      *                                loaded and this is true, it will be run instead of the selected auto.
      */
+    @SuppressWarnings("unused")
     public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
-        networkAutoLock.lock();
         @Nullable GuiAuto selectedAuto;
+        networkAutoLock.lock();
         try {
             if (allowRunningNetworkAuto && networkAuto != null) {
                 selectedAuto = networkAuto;
@@ -334,8 +339,43 @@ public final class AutonomousContainer {
         }
 
         // Ensure that no other autos are currently running
+        runAuto(selectedAuto);
+    }
+
+    /**
+     * Runs an auto that is located at the given absolute file path.
+     *
+     * @param file                    The absolute file path of the auto to run.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
+     *                                loaded and this is true, it will be run instead of the selected auto.
+     */
+    @SuppressWarnings("unused")
+    public synchronized void runAutonomous(File file, boolean allowRunningNetworkAuto) {
+        @Nullable GuiAuto selectedAuto;
+        networkAutoLock.lock();
+        try {
+            if (allowRunningNetworkAuto && networkAuto != null) {
+                selectedAuto = networkAuto;
+            } else {
+                selectedAuto = autonomousList.get(file.getAbsolutePath());
+            }
+        } finally {
+            networkAutoLock.unlock();
+        }
+
+        // If the auto is null, it means that the auto was not found.
+        if (selectedAuto == null) {
+            DriverStation.reportError("Could not find auto: " + file.getAbsolutePath(), false);
+            return;
+        }
+
+        runAuto(selectedAuto);
+    }
+
+    private void runAuto(@NotNull GuiAuto selectedAuto) {
+        // Ensure that no other autos are currently running
         killAuto();
-        commandTranslator.onPeriodic(); // Ensure that data is not stale
+        commandTranslator.clearCommandQueue();
 
         // We then create a new thread to run the auto and run it
         synchronized (autoThreadLock) {

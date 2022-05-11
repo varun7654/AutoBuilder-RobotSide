@@ -99,6 +99,11 @@ public class CommandTranslator {
     }
 
     @Internal
+    protected void clearCommandQueue() {
+        commandQueue.clear();
+    }
+
+    @Internal
     public void setRobotPose(@NotNull Pose2d pose) {
         if (runOnMainThread) {
             commandQueue.add(() -> setRobotPose.accept(pose));
@@ -134,10 +139,16 @@ public class CommandTranslator {
         commandQueue.add(runnable);
     }
 
+    /**
+     * Runs commands on the main thread. (called every 1ms)
+     */
     @Internal
     protected void onPeriodic() {
         while (!commandQueue.isEmpty()) {
-            commandQueue.poll().run();
+            @Nullable Runnable commandToRun = commandQueue.poll();
+            if (commandToRun != null) {
+                commandToRun.run();
+            }
         }
     }
 }

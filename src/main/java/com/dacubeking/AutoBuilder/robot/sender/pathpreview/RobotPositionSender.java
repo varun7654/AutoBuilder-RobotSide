@@ -17,12 +17,14 @@ public final class RobotPositionSender {
 
     public synchronized static void addRobotPosition(RobotState robotState) {
         robotStatesHashMap.put(robotState.name, robotState);
-        StringBuilder sb = new StringBuilder();
+        if (robotState.name.equals("Robot Position")) {
+            StringBuilder sb = new StringBuilder();
 
-        robotStatesHashMap.values().removeIf(removeCondition); // remove values older than 0.2 seconds
-        for (RobotState state : robotStatesHashMap.values()) {
-            sb.append(state.toString()).append(";");
+            robotStatesHashMap.values().removeIf(removeCondition); // remove values older than 0.2 seconds
+            for (RobotState state : robotStatesHashMap.values()) {
+                sb.append(state.toString()).append(";");
+            }
+            robotPositionsTable.setString(sb.toString());
         }
-        robotPositionsTable.setString(sb.toString());
     }
 }

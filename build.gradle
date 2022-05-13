@@ -18,7 +18,7 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-version = '0.3.0'
+version = '0.3.1'
 group = 'com.dacubeking'
 
 repositories {

@@ -90,6 +90,7 @@ public final class AutonomousContainer {
         }
 
         initializeAccessibleInstances(parentObjects, crashOnError);
+        printDebug("Initialized Accessible Instances");
 
         //Create the listener for network autos
         autoPath.addListener(event ->
@@ -117,6 +118,7 @@ public final class AutonomousContainer {
         long startLoadingTime = System.currentTimeMillis();
 
         findAutosAndLoadAutos(new File(AUTO_DIRECTORY), crashOnError);
+        printDebug("Found Autos and waiting for them to load");
 
         blockedThread = Thread.currentThread();
         // Wait for all autos to be loaded
@@ -213,11 +215,10 @@ public final class AutonomousContainer {
                         try {
                             autonomousList.put(file.getAbsolutePath(), new GuiAuto(file));
                             successfullyLoadedAutosCount.incrementAndGet();
+                            printDebug("Successfully loaded auto: " + file.getAbsolutePath());
                         } catch (IOException e) {
-                            if (debugPrints) {
-                                DriverStation.reportError("Failed to deserialize auto: " + e.getLocalizedMessage(),
-                                        e.getStackTrace());
-                            }
+                            DriverStation.reportError("Failed to deserialize auto: " + e.getLocalizedMessage(),
+                                    e.getStackTrace());
                         }
                     }).thenRun(this::incrementLoadedAutos);
                     numAutonomousFiles++;
@@ -232,7 +233,7 @@ public final class AutonomousContainer {
     @Nullable private Thread blockedThread = null;
 
     private void incrementLoadedAutos() {
-        loadedAutosCount.incrementAndGet();
+        System.out.println("Loaded Autos: " + loadedAutosCount.incrementAndGet() + "/" + numAutonomousFiles);
         if (blockedThread != null) {
             blockedThread.interrupt();
         }

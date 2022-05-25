@@ -19,7 +19,7 @@ final class ReflectionClassData {
 
     ReflectionClassData(@NotNull Class<?> clazz) {
         this.fullName = clazz.getName();
-        Method[] methods = clazz.getMethods();
+        Method[] methods = clazz.getDeclaredMethods();
         this.methods = new ReflectionMethodData[methods.length];
         for (int i = 0; i < methods.length; i++) {
             this.methods[i] = new ReflectionMethodData(methods[i]);

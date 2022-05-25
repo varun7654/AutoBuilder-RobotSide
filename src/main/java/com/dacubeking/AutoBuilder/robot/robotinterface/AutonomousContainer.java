@@ -21,9 +21,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,10 +53,10 @@ public final class AutonomousContainer {
 
     private CommandTranslator commandTranslator;
     private boolean isHolonomic;
-    private boolean debugPrints = false;
+    private volatile boolean debugPrints = false;
 
-    private final HashMap<String, GuiAuto> autonomousList = new HashMap<>();
-    private final @NotNull HashMap<String, Object> parentObjects = new HashMap<>();
+    private final ConcurrentHashMap<String, GuiAuto> autonomousList = new ConcurrentHashMap<>();
+    private final @NotNull Hashtable<String, Object> parentObjects = new Hashtable<>();
 
     private static final String AUTO_DIRECTORY = Filesystem.getDeployDirectory().getAbsoluteFile() + "/autos/";
 
@@ -118,7 +119,7 @@ public final class AutonomousContainer {
         long startLoadingTime = System.currentTimeMillis();
 
         findAutosAndLoadAutos(new File(AUTO_DIRECTORY), crashOnError);
-        printDebug("Found Autos and waiting for them to load");
+        System.out.println("Found " + numAutonomousFiles + " Autos. Waiting for them to load");
 
         blockedThread = Thread.currentThread();
         // Wait for all autos to be loaded
@@ -221,6 +222,7 @@ public final class AutonomousContainer {
                                     e.getStackTrace());
                         }
                     }).thenRun(this::incrementLoadedAutos);
+
                     numAutonomousFiles++;
                 }
             }
@@ -233,7 +235,7 @@ public final class AutonomousContainer {
     @Nullable private Thread blockedThread = null;
 
     private void incrementLoadedAutos() {
-        System.out.println("Loaded Autos: " + loadedAutosCount.incrementAndGet() + "/" + numAutonomousFiles);
+        printDebug("Loaded Autos: " + loadedAutosCount.incrementAndGet() + "/" + numAutonomousFiles);
         if (blockedThread != null) {
             blockedThread.interrupt();
         }
@@ -261,19 +263,19 @@ public final class AutonomousContainer {
     }
 
     @Internal
-    public synchronized void printDebug(String message) {
+    public void printDebug(String message) {
         if (debugPrints) {
             System.out.println(message);
         }
     }
 
     @Internal
-    public synchronized @NotNull HashMap<String, Object> getAccessibleInstances() {
+    public @NotNull Hashtable<String, Object> getAccessibleInstances() {
         return parentObjects;
     }
 
     @SuppressWarnings("unused")
-    public synchronized void setDebugPrints(boolean debugPrints) {
+    public void setDebugPrints(boolean debugPrints) {
         this.debugPrints = debugPrints;
     }
 
@@ -282,7 +284,7 @@ public final class AutonomousContainer {
      * @return A list of the names of all the autos that have been loaded. The name is the name of the file, without the .json
      */
     @SuppressWarnings("unused")
-    public synchronized ArrayList<String> getAutonomousNames() {
+    public ArrayList<String> getAutonomousNames() {
         ArrayList<String> names = new ArrayList<>(autonomousList.size());
         for (String absoluteFilePath : autonomousList.keySet()) {
             String[] splitFilePath = absoluteFilePath.split("/");
@@ -295,7 +297,7 @@ public final class AutonomousContainer {
      * @return A list of the absolute paths of all the autos that have been loaded.
      */
     @SuppressWarnings("unused")
-    public synchronized Set<String> getAbsoluteAutonomousPaths() {
+    public Set<String> getAbsoluteAutonomousPaths() {
         return autonomousList.keySet();
     }
 

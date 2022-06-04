@@ -158,6 +158,14 @@ public final class AutonomousContainer {
                         try {
                             method.setAccessible(true);
                             Object instance = method.invoke(parentObject);
+
+                            if (this.parentObjects.contains(instance.getClass().getName())) {
+                                IllegalStateException exception = new IllegalStateException(
+                                        "There are multiple @AutoBuilderAccessible for the same type\n" +
+                                                "Remove the @AutoBuilderAccessible annotation at " + method.getName());
+                                exception.fillInStackTrace();
+                                throw exception;
+                            }
                             this.parentObjects.put(instance.getClass().getName(), instance);
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());
@@ -174,6 +182,14 @@ public final class AutonomousContainer {
                         try {
                             field.setAccessible(true);
                             Object instance = field.get(parentObject);
+                            if (this.parentObjects.contains(instance.getClass().getName())) {
+                                IllegalStateException exception = new IllegalStateException(
+                                        "There are multiple @AutoBuilderAccessible for the same type\n" +
+                                                "Remove the @AutoBuilderAccessible annotation at " + field.getName());
+                                exception.fillInStackTrace();
+                                throw exception;
+                            }
+
                             this.parentObjects.put(instance.getClass().getName(), instance);
                         } catch (IllegalAccessException e) {
                             DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());

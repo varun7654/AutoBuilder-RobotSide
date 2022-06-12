@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 class HudElementSender {
     private static final @NotNull NetworkTableEntry hudElementsEntry = NetworkTableInstance.getDefault()
-            .getEntry("autodata.hudElements");
+            .getEntry("autodata/hudElements");
 
     private static final ConcurrentHashMap<HudElement, String> hudElements = new ConcurrentHashMap<>();
 

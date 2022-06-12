@@ -10,10 +10,10 @@ import java.util.function.Predicate;
 
 public final class RobotPositionSender {
     private static final NetworkTableEntry robotPositionsTable = NetworkTableInstance.getDefault()
-            .getEntry("autodata.robotPositions");
+            .getEntry("autodata/robotPositions");
     private final static Map<String, RobotState> robotStatesHashMap = new HashMap<>(4);
 
-    private static final Predicate<RobotState> removeCondition = state -> state.timeCreated > Timer.getFPGATimestamp() - 0.2;
+    private static final Predicate<RobotState> removeCondition = state -> state.timeCreated < Timer.getFPGATimestamp() - 0.2;
 
     public synchronized static void addRobotPosition(RobotState robotState) {
         robotStatesHashMap.put(robotState.name, robotState);

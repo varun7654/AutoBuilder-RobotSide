@@ -4,7 +4,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class Renderer {
-    private static final NetworkTableEntry drawables = NetworkTableInstance.getDefault().getEntry("autodata.drawables");
+    private static final NetworkTableEntry drawables = NetworkTableInstance.getDefault().getEntry("autodata/drawables");
 
     public static void render(Drawable... drawable) {
         String[] drawableStrings = new String[drawable.length];

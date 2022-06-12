@@ -98,6 +98,8 @@ class SendableCommand {
             String className = String.join(".", classNameArray);
 
             if (AutonomousContainer.getInstance().getAccessibleInstances().containsKey(className)) {
+                instance = AutonomousContainer.getInstance().getAccessibleInstances().get(className);
+            } else {
                 try {
                     Class<?> cls = Class.forName(className);
                     Class<?>[] typeArray = Arrays.stream(objArgs).sequential().map(Object::getClass).toArray(Class[]::new);
@@ -124,8 +126,6 @@ class SendableCommand {
                     DriverStation.reportError("Could not get singleton reference in class " + className + " for method: " +
                             splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e.getStackTrace());
                 }
-            } else {
-                instance = AutonomousContainer.getInstance().getAccessibleInstances().get(className);
             }
         }
 

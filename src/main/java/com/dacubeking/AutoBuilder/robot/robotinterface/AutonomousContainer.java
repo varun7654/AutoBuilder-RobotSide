@@ -51,6 +51,10 @@ public final class AutonomousContainer {
         return autonomousContainer;
     }
 
+    private AutonomousContainer() {
+
+    }
+
     private CommandTranslator commandTranslator;
     private boolean isHolonomic;
     private volatile boolean debugPrints = false;

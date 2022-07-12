@@ -4,6 +4,8 @@ import com.dacubeking.AutoBuilder.robot.GuiAuto;
 import com.dacubeking.AutoBuilder.robot.NetworkAuto;
 import com.dacubeking.AutoBuilder.robot.annotations.AutoBuilderAccessible;
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.ClassPath;
+import com.google.common.reflect.ClassPath.ClassInfo;
 import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -67,11 +70,10 @@ public final class AutonomousContainer {
     /**
      * @param isHolonomic       Is the robot using a holonomic drivetrain? (ex: swerve or mecanum)
      * @param commandTranslator The command translator to use
-     * @param crashOnError      Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will
-     *                          crash. If this is disabled, the robot will skip the invalid auto and continue to the next one.
+     * @param crashOnError      Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash. If this is disabled, the robot will skip the invalid auto and
+     *                          continue to the next one.
      * @param parentObjects     Objects that can be used to access other objects annotated with {@link AutoBuilderAccessible}.
-     * @param timedRobot        The timed robot to use to create the period function for the autos. This can be null if you're
-     *                          running autos completely asynchronously.
+     * @param timedRobot        The timed robot to use to create the period function for the autos. This can be null if you're running autos completely asynchronously.
      */
     @SuppressWarnings("unused")
     public synchronized void initialize(
@@ -148,14 +150,14 @@ public final class AutonomousContainer {
     }
 
     /**
-     * Uses the given parent objects to find all fields/methods/constructors annotated with {@link AutoBuilderAccessible} to store
-     * them for use in autos.
+     * Uses the given parent objects to find all fields/methods/constructors annotated with {@link AutoBuilderAccessible} to store them for use in autos.
      *
      * @param parentObjects Objects that can be used to access other objects annotated with {@link AutoBuilderAccessible}.
      */
     private synchronized void initializeAccessibleInstances(Object[] parentObjects, boolean crashOnError) {
         for (Object parentObject : parentObjects) {
             Arrays.stream(parentObject.getClass().getDeclaredMethods())
+                    .filter(method -> !Modifier.isStatic(method.getModifiers()))
                     .filter(method -> Arrays.stream(method.getDeclaredAnnotations())
                             .anyMatch(annotation -> annotation.annotationType() == AutoBuilderAccessible.class))
                     .forEach(method -> {
@@ -180,6 +182,7 @@ public final class AutonomousContainer {
                     });
 
             Arrays.stream(parentObject.getClass().getDeclaredFields())
+                    .filter(method -> !Modifier.isStatic(method.getModifiers()))
                     .filter(field -> Arrays.stream(field.getDeclaredAnnotations())
                             .anyMatch(annotation -> annotation.annotationType().isAssignableFrom(AutoBuilderAccessible.class)))
                     .forEach(field -> {
@@ -203,6 +206,70 @@ public final class AutonomousContainer {
                         }
                     });
         }
+        try {
+            Set<ClassInfo> classInfos = ClassPath.from(Thread.currentThread().getContextClassLoader()).getTopLevelClasses();
+            for (ClassInfo classInfo : classInfos) {
+                try {
+                    Class<?> clazz = classInfo.load();
+
+                    Arrays.stream(clazz.getDeclaredMethods())
+                            .filter(method -> Modifier.isStatic(method.getModifiers()))
+                            .filter(method -> Arrays.stream(method.getDeclaredAnnotations())
+                                    .anyMatch(annotation -> annotation.annotationType() == AutoBuilderAccessible.class))
+                            .forEach(method -> {
+                                method.setAccessible(true);
+                                try {
+                                    if (this.parentObjects.contains(instance.getClass().getName())) {
+                                        IllegalStateException exception = new IllegalStateException(
+                                                "There are multiple @AutoBuilderAccessible for the same type\n" +
+                                                        "Remove the @AutoBuilderAccessible annotation at " + method.getName());
+                                        exception.fillInStackTrace();
+                                        throw exception;
+                                    }
+
+                                    this.parentObjects.put(method.getReturnType().getName(), method.invoke(null));
+                                } catch (IllegalAccessException | InvocationTargetException e) {
+                                    DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());
+                                    if (crashOnError) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            });
+
+                    Arrays.stream(clazz.getDeclaredFields())
+                            .filter(field -> Modifier.isStatic(field.getModifiers()))
+                            .filter(field -> Arrays.stream(field.getDeclaredAnnotations())
+                                    .anyMatch(annotation -> annotation.annotationType() == AutoBuilderAccessible.class))
+                            .forEach(field -> {
+                                field.setAccessible(true);
+                                try {
+                                    if (this.parentObjects.contains(instance.getClass().getName())) {
+                                        IllegalStateException exception = new IllegalStateException(
+                                                "There are multiple @AutoBuilderAccessible for the same type\n" +
+                                                        "Remove the @AutoBuilderAccessible annotation at " + field.getName());
+                                        exception.fillInStackTrace();
+                                        throw exception;
+                                    }
+
+                                    this.parentObjects.put(field.getType().getName(), field.get(null));
+                                } catch (IllegalAccessException e) {
+                                    DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());
+                                    if (crashOnError) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            });
+                } catch (NoClassDefFoundError e) {
+                    // Sometimes it'll try to load a package info file instead of a class file. Ignore those.
+                    continue;
+                }
+            }
+        } catch (IOException e) {
+            DriverStation.reportError("Failed to get all available classes to search for @AutoBuilderAccessible Instances: " + e.getMessage(), e.getStackTrace());
+            if (crashOnError) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
 
@@ -210,8 +277,8 @@ public final class AutonomousContainer {
      * Recursively finds all autonomous files in the given directory and loads them.
      *
      * @param directory    The directory to search in.
-     * @param crashOnError Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash.
-     *                     If this is disabled, the robot will skip the invalid auto and continue to the next one.
+     * @param crashOnError Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash. If this is disabled, the robot will skip the invalid auto and continue
+     *                     to the next one.
      */
     private synchronized void findAutosAndLoadAutos(File directory, boolean crashOnError) {
         File[] autos = directory.listFiles();
@@ -324,13 +391,11 @@ public final class AutonomousContainer {
     /**
      * Run an auto with the given name and side. These names should match the names given by {@link #getAutonomousNames()}.
      * <p>
-     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to
-     * perform checks to determine if the auto is sided or not.
+     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to perform checks to determine if the auto is sided or not.
      *
      * @param name                    The name of the auto to run.
      * @param side                    The side of the robot that the auto will be run on.
-     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
-     *                                loaded and this is true, it will be run instead of the selected auto.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
      */
     @SuppressWarnings("unused")
     public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
@@ -369,8 +434,7 @@ public final class AutonomousContainer {
      * Runs an auto that is located at the given absolute file path.
      *
      * @param file                    The absolute file path of the auto to run.
-     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
-     *                                loaded and this is true, it will be run instead of the selected auto.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
      */
     @SuppressWarnings("unused")
     public synchronized void runAutonomous(File file, boolean allowRunningNetworkAuto) {

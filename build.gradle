@@ -18,7 +18,7 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
 
-version = '1.0.0'
+version = '1.0.0-javaScriptsTest.4'
 group = 'com.dacubeking'
 
 repositories {
@@ -28,6 +28,7 @@ repositories {
 
 dependencies {
     implementation 'org.jetbrains:annotations:23.0.0'
+    implementation 'org.reflections:reflections:0.10.2'
 
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'

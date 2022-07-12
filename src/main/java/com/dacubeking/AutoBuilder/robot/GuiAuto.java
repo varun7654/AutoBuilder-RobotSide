@@ -26,8 +26,7 @@ public class GuiAuto implements Runnable {
     private Pose2d initialPose;
 
     /**
-     * Ensure you are creating the objects for your auto on robot init. The roborio will take multiple seconds to initialize the
-     * auto.
+     * Ensure you are creating the objects for your auto on robot init. The roborio will take multiple seconds to initialize the auto.
      *
      * @param autonomousFile File location of the auto
      */
@@ -37,8 +36,7 @@ public class GuiAuto implements Runnable {
     }
 
     /**
-     * Ensure you are creating the objects for your auto before you run them. The roborio will take multiple seconds to initialize
-     * the auto.
+     * Ensure you are creating the objects for your auto before you run them. The roborio will take multiple seconds to initialize the auto.
      *
      * @param autonomousJson String of the autonomous
      */
@@ -84,6 +82,9 @@ public class GuiAuto implements Runnable {
         //Set our initial pose in our robot tracker
         if (initialPose != null) {
             getCommandTranslator().setRobotPose(initialPose);
+            AutonomousContainer.getInstance().printDebug("Set initial pose: " + initialPose);
+        } else {
+            AutonomousContainer.getInstance().printDebug("No initial pose set");
         }
 
         //Loop though all the steps and execute them

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.Thread.State;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,11 +68,10 @@ public final class AutonomousContainer {
     /**
      * @param isHolonomic       Is the robot using a holonomic drivetrain? (ex: swerve or mecanum)
      * @param commandTranslator The command translator to use
-     * @param crashOnError      Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will
-     *                          crash. If this is disabled, the robot will skip the invalid auto and continue to the next one.
+     * @param crashOnError      Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash. If this is disabled, the robot will skip the invalid auto and
+     *                          continue to the next one.
      * @param parentObjects     Objects that can be used to access other objects annotated with {@link AutoBuilderAccessible}.
-     * @param timedRobot        The timed robot to use to create the period function for the autos. This can be null if you're
-     *                          running autos completely asynchronously.
+     * @param timedRobot        The timed robot to use to create the period function for the autos. This can be null if you're running autos completely asynchronously.
      */
     @SuppressWarnings("unused")
     public synchronized void initialize(
@@ -148,8 +148,7 @@ public final class AutonomousContainer {
     }
 
     /**
-     * Uses the given parent objects to find all fields/methods/constructors annotated with {@link AutoBuilderAccessible} to store
-     * them for use in autos.
+     * Uses the given parent objects to find all fields/methods/constructors annotated with {@link AutoBuilderAccessible} to store them for use in autos.
      *
      * @param parentObjects Objects that can be used to access other objects annotated with {@link AutoBuilderAccessible}.
      */
@@ -210,8 +209,8 @@ public final class AutonomousContainer {
      * Recursively finds all autonomous files in the given directory and loads them.
      *
      * @param directory    The directory to search in.
-     * @param crashOnError Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash.
-     *                     If this is disabled, the robot will skip the invalid auto and continue to the next one.
+     * @param crashOnError Should the robot crash on error? If this is enabled, and an auto fails to load, the robot will crash. If this is disabled, the robot will skip the invalid auto and continue
+     *                     to the next one.
      */
     private synchronized void findAutosAndLoadAutos(File directory, boolean crashOnError) {
         File[] autos = directory.listFiles();
@@ -324,13 +323,11 @@ public final class AutonomousContainer {
     /**
      * Run an auto with the given name and side. These names should match the names given by {@link #getAutonomousNames()}.
      * <p>
-     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to
-     * perform checks to determine if the auto is sided or not.
+     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to perform checks to determine if the auto is sided or not.
      *
      * @param name                    The name of the auto to run.
      * @param side                    The side of the robot that the auto will be run on.
-     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
-     *                                loaded and this is true, it will be run instead of the selected auto.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
      */
     @SuppressWarnings("unused")
     public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
@@ -369,8 +366,7 @@ public final class AutonomousContainer {
      * Runs an auto that is located at the given absolute file path.
      *
      * @param file                    The absolute file path of the auto to run.
-     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is
-     *                                loaded and this is true, it will be run instead of the selected auto.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
      */
     @SuppressWarnings("unused")
     public synchronized void runAutonomous(File file, boolean allowRunningNetworkAuto) {
@@ -416,7 +412,7 @@ public final class AutonomousContainer {
                 autoThread.interrupt();
 
                 double nextStackTracePrint = Timer.getFPGATimestamp() + 1;
-                while (!autoThread.isAlive()) {
+                while (!autoThread.isAlive() || autoThread.getState() == State.TERMINATED) {
                     if (Timer.getFPGATimestamp() > nextStackTracePrint) {
                         Exception throwable = new Exception(
                                 "Waiting for auto to die. autoThread.getState() = " + autoThread.getState() +

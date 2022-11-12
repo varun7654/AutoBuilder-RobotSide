@@ -223,7 +223,9 @@ public final class AutonomousContainer {
                     continue;
                 }
 
-                if (file.getName().endsWith(".json")) {
+                String fileName = file.getName();
+
+                if (fileName.endsWith(".json") || fileName.endsWith(".auto")) {
                     if (file.getName().contains("NOTDEPLOYABLE")) {
                         System.out.println("Skipping " + file.getAbsolutePath() + " because it is marked as NOTDEPLOYABLE");
                         if (crashOnError) throw new RuntimeException("An un-deployable file was found");

@@ -31,7 +31,7 @@ public class GuiAuto implements Runnable {
      * @param autonomousFile File location of the auto
      */
     public GuiAuto(File autonomousFile) throws IOException {
-        autonomous = (Autonomous) Serializer.deserializeFromFile(autonomousFile, Autonomous.class);
+        autonomous = (Autonomous) Serializer.deserializeFromFile(autonomousFile, Autonomous.class, autonomousFile.getName().endsWith(".json"));
         init();
     }
 
@@ -42,7 +42,7 @@ public class GuiAuto implements Runnable {
      */
     public GuiAuto(String autonomousJson) {
         try {
-            autonomous = (Autonomous) Serializer.deserialize(autonomousJson, Autonomous.class);
+            autonomous = (Autonomous) Serializer.deserialize(autonomousJson, Autonomous.class, true);
         } catch (IOException e) {
             DriverStation.reportError("Failed to deserialize auto. " + e.getMessage(), e.getStackTrace());
         }

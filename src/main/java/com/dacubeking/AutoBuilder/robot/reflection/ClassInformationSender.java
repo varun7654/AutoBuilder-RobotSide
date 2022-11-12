@@ -17,8 +17,8 @@ import java.util.Set;
 public final class ClassInformationSender {
 
     /**
-     * Gets information about your robot code for the AutoBuilder Gui to use. This includes the names of all the classes, their
-     * methods, their parameters and more. Also saves this data in a json file for the AutoBuilder Gui to use.
+     * Gets information about your robot code for the AutoBuilder Gui to use. This includes the names of all the classes, their methods, their parameters and more. Also saves this data in a json file
+     * for the AutoBuilder Gui to use.
      *
      * @param packageName The package name of your robot code. (it will recursively search the packages for all classes)
      */
@@ -27,11 +27,10 @@ public final class ClassInformationSender {
     }
 
     /**
-     * Gets information about your robot code for the AutoBuilder Gui to use. This includes the names of all the classes, their
-     * methods, their parameters and more. Also saves this data in a json file for the AutoBuilder Gui to use.
+     * Gets information about your robot code for the AutoBuilder Gui to use. This includes the names of all the classes, their methods, their parameters and more. Also saves this data in a json file
+     * for the AutoBuilder Gui to use.
      *
-     * @param file        The file to save the data to. (Use {@link #updateReflectionInformation(String)} to save to the default
-     *                    file)
+     * @param file        The file to save the data to. (Use {@link #updateReflectionInformation(String)} to save to the default file)
      * @param packageName The package name of your robot code. (it will recursively search the packages for all classes)
      */
     public static void updateReflectionInformation(@Nullable File file, @NotNull String packageName) {
@@ -61,7 +60,7 @@ public final class ClassInformationSender {
 
             if (file != null) {
                 file.getParentFile().mkdir();
-                Serializer.serializeToFile(reflectionClassDataList, file);
+                Serializer.serializeToFile(reflectionClassDataList, file, true);
             }
         } catch (IOException e) {
             e.printStackTrace();

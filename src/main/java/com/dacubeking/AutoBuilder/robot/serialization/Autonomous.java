@@ -15,7 +15,7 @@ public class Autonomous {
     private final List<AbstractAutonomousStep> autonomousSteps;
 
     @JsonCreator
-    private Autonomous(@JsonProperty(required = true, value = "autonomousSteps") List<AbstractAutonomousStep> autonomousSteps) {
+    public Autonomous(@JsonProperty(required = true, value = "autonomousSteps") List<AbstractAutonomousStep> autonomousSteps) {
         this.autonomousSteps = autonomousSteps;
     }
 

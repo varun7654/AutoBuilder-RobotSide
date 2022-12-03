@@ -1,6 +1,7 @@
 package com.dacubeking.AutoBuilder.robot.reflection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.wpi.first.wpilibj2.command.Command;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
@@ -13,9 +14,14 @@ final class ReflectionClassData {
     @JsonProperty private final String @NotNull [] fieldNames;
     @JsonProperty private final String @NotNull [] fieldTypes;
     @JsonProperty private final ReflectionMethodData @NotNull [] methods;
+
+    @JsonProperty
+    private final @NotNull String superClass;
+
+    @JsonProperty private final String @NotNull [] interfaces;
     @JsonProperty private final int modifiers;
     @JsonProperty private final boolean isEnum;
-
+    @JsonProperty private final boolean isCommand;
 
     ReflectionClassData(@NotNull Class<?> clazz) {
         this.fullName = clazz.getName();
@@ -32,19 +38,45 @@ final class ReflectionClassData {
             this.fieldTypes[i] = clazz.getDeclaredFields()[i].getType().getName();
         }
 
-        this.isEnum = clazz.isEnum();
+        this.superClass = clazz.getSuperclass().getName();
+        interfaces = Arrays.stream(clazz.getInterfaces()).map(Class::getName).toArray(String[]::new);
 
         modifiers = clazz.getModifiers();
+        this.isEnum = clazz.isEnum();
+
+        isCommand = isCommand(clazz);
+    }
+
+    private boolean isCommand(Class<?> clazz) {
+        if (clazz == null) {
+            return false;
+        }
+
+        if (clazz.getName().equals(Command.class.getName())) {
+            return true;
+        }
+
+        for (Class<?> anInterface : clazz.getInterfaces()) {
+            if (isCommand(anInterface)) {
+                return true;
+            }
+        }
+
+        return isCommand(clazz.getSuperclass());
     }
 
     @Override
-    public @NotNull
-    String toString() {
+    public String toString() {
         return "ReflectionClassData{" +
                 "fullName='" + fullName + '\'' +
                 ", fieldNames=" + Arrays.toString(fieldNames) +
                 ", fieldTypes=" + Arrays.toString(fieldTypes) +
                 ", methods=" + Arrays.toString(methods) +
+                ", superClass='" + superClass + '\'' +
+                ", interfaces=" + Arrays.toString(interfaces) +
+                ", modifiers=" + modifiers +
+                ", isEnum=" + isEnum +
+                ", isCommand=" + isCommand +
                 '}';
     }
 }

@@ -60,7 +60,7 @@ public final class AutonomousContainer {
     private boolean isHolonomic;
     private volatile boolean debugPrints = false;
 
-    private final ConcurrentHashMap<String, GuiAuto> autonomousList = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<File, GuiAuto> autonomousList = new ConcurrentHashMap<>();
     private final @NotNull Hashtable<String, Object> parentObjects = new Hashtable<>();
 
     private static final String AUTO_DIRECTORY = Filesystem.getDeployDirectory().getAbsoluteFile() + "/autos/";
@@ -235,7 +235,7 @@ public final class AutonomousContainer {
 
                     CompletableFuture.runAsync(() -> {
                         try {
-                            autonomousList.put(file.getAbsolutePath(), new GuiAuto(file));
+                            autonomousList.put(file, new GuiAuto(file));
                             successfullyLoadedAutosCount.incrementAndGet();
                             printDebug("Successfully loaded auto: " + file.getAbsolutePath());
                         } catch (IOException e) {
@@ -307,9 +307,9 @@ public final class AutonomousContainer {
     @SuppressWarnings("unused")
     public ArrayList<String> getAutonomousNames() {
         ArrayList<String> names = new ArrayList<>(autonomousList.size());
-        for (String absoluteFilePath : autonomousList.keySet()) {
-            String[] splitFilePath = absoluteFilePath.split("/");
-            names.add(splitFilePath[splitFilePath.length - 1].replace(".json", ""));
+        for (File absoluteFilePath : autonomousList.keySet()) {
+            String fileName = absoluteFilePath.getName();
+            names.add(fileName.substring(0, fileName.lastIndexOf('.'))); // Strip the file extension
         }
         return names;
     }
@@ -318,7 +318,7 @@ public final class AutonomousContainer {
      * @return A list of the absolute paths of all the autos that have been loaded.
      */
     @SuppressWarnings("unused")
-    public Set<String> getAbsoluteAutonomousPaths() {
+    public Set<File> getAbsoluteAutonomousPaths() {
         return autonomousList.keySet();
     }
 
@@ -339,9 +339,20 @@ public final class AutonomousContainer {
             if (allowRunningNetworkAuto && networkAuto != null) {
                 selectedAuto = networkAuto;
             } else {
-                String autoPath = AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".json";
+
+                File autoPath = new File(AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".auto");
+
                 if (!autonomousList.containsKey(autoPath)) {
-                    autoPath = AUTO_DIRECTORY + name + ".json"; // Try the name without the side
+                    autoPath = new File(AUTO_DIRECTORY + name + ".auto"); // Try the name without the side
+                }
+
+                // If the auto is still not found, try the json extension
+                if (!autonomousList.containsKey(autoPath)) {
+                    autoPath = new File(AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".json");
+                }
+
+                if (!autonomousList.containsKey(autoPath)) {
+                    autoPath = new File(AUTO_DIRECTORY + name + ".json"); // Try the name without the side
                 }
 
                 selectedAuto = autonomousList.get(autoPath);
@@ -353,8 +364,10 @@ public final class AutonomousContainer {
         // If the auto is null, it means that the auto was not found.
         if (selectedAuto == null) {
             DriverStation.reportError("Could not find auto: " + name +
-                            "\nExpected to find the auto in:\n"
-                            + AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".json" +
+                            "\nExpected to find the auto in:\n" +
+                            AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".auto" +
+                            "\nOr:\n" + AUTO_DIRECTORY + name + ".auto" +
+                            "\nOr:\n" + AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".json" +
                             "\nOr:\n" + AUTO_DIRECTORY + name + ".json",
                     false);
             return;
@@ -378,7 +391,7 @@ public final class AutonomousContainer {
             if (allowRunningNetworkAuto && networkAuto != null) {
                 selectedAuto = networkAuto;
             } else {
-                selectedAuto = autonomousList.get(file.getAbsolutePath());
+                selectedAuto = autonomousList.get(file);
             }
         } finally {
             networkAutoLock.unlock();
@@ -389,7 +402,7 @@ public final class AutonomousContainer {
             DriverStation.reportError("Could not find auto: " + file.getAbsolutePath(), false);
             return;
         }
-
+        Thread.interrupted(); // Clear the interrupted flag on the calling thread
         runAuto(selectedAuto);
     }
 
@@ -422,6 +435,13 @@ public final class AutonomousContainer {
                                         "exit when it is interrupted.");
                         throwable.setStackTrace(autoThread.getStackTrace());
                         throwable.printStackTrace();
+                        if (commandTranslator.runOnMainThread) {
+                            Exception throwable2 = new Exception("The auto is running on the main thread. " +
+                                    "Double check the stack trace below and ensure that nothing is blocking your main thread." +
+                                    "(Note: The below stack trace will be the stack trace of the main thread, if you called killAuto() from the main thread");
+                            throwable2.fillInStackTrace();
+                            throwable2.printStackTrace();
+                        }
                         nextStackTracePrint = Timer.getFPGATimestamp() + 5;
                     }
 

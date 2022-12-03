@@ -3,6 +3,7 @@ package com.dacubeking.AutoBuilder.robot.reflection;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -38,7 +39,14 @@ final class ReflectionClassData {
             this.fieldTypes[i] = clazz.getDeclaredFields()[i].getType().getName();
         }
 
-        this.superClass = clazz.getSuperclass().getName();
+        @Nullable Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            this.superClass = superClass.getName();
+        } else {
+            this.superClass = "";
+        }
+
+
         interfaces = Arrays.stream(clazz.getInterfaces()).map(Class::getName).toArray(String[]::new);
 
         modifiers = clazz.getModifiers();

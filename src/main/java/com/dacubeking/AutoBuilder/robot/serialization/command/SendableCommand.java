@@ -14,7 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -60,6 +62,17 @@ class SendableCommand {
         INFERABLE_TYPES_PARSER.put(Character.class.getName(), s -> Character.valueOf(s.charAt(0)));
         INFERABLE_TYPES_PARSER.put(Boolean.class.getName(), Boolean::valueOf);
     }
+
+    private static final List<String> primitiveTypes = Arrays.asList(
+            int.class.getName(),
+            double.class.getName(),
+            float.class.getName(),
+            long.class.getName(),
+            short.class.getName(),
+            byte.class.getName(),
+            char.class.getName(),
+            boolean.class.getName()
+    );
 
     @JsonCreator
     protected SendableCommand(@JsonProperty("methodName") @NotNull String methodName,
@@ -125,8 +138,12 @@ class SendableCommand {
 
                     // Get an array of the class types to find the correct method
                     Class<?>[] typeArray = new Class[argTypes.length];
-                    for (int i = 0; i < typeArray.length; i++) {
-                        typeArray[i] = Class.forName(argTypes[i]);
+                    for (int i = 0; i < objArgs.length; i++) {
+                        if (primitiveTypes.contains(argTypes[i])) {
+                            typeArray[i] = getPrimitiveClass(objArgs[i].getClass());
+                        } else {
+                            typeArray[i] = objArgs[i].getClass();
+                        }
                     }
 
                     if (typeArray.length == 0) {

@@ -24,8 +24,8 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 
 public class GuiAuto implements Runnable {
 
-    private final Autonomous doNothingAutonomous = new Autonomous(new ArrayList<>());
-    private @NotNull Autonomous autonomous = doNothingAutonomous; // default to do nothing in case of some error
+    private static final Autonomous DO_NOTHING_AUTONOMOUS = new Autonomous(new ArrayList<>());
+    private @NotNull Autonomous autonomous = DO_NOTHING_AUTONOMOUS; // default to do nothing in case of some error
     private @Nullable Pose2d initialPose;
 
     /**
@@ -80,7 +80,7 @@ public class GuiAuto implements Runnable {
             getCommandTranslator().stopRobot();
         });
 
-        if (autonomous == doNothingAutonomous) {
+        if (autonomous == DO_NOTHING_AUTONOMOUS) {
             DriverStation.reportError("No auto was loaded. Doing nothing.", false);
             return;
         }

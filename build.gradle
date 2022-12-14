@@ -12,14 +12,14 @@ plugins {
     id 'maven-publish'
     id "java"
     id 'signing'
-    id "edu.wpi.first.GradleRIO" version "2022.4.1"
+    id "edu.wpi.first.GradleRIO" version "2023.1.1-beta-4"
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 group = 'com.dacubeking'
-version = '1.0.2-beta'
+version = '1.0.2-beta-2023'
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()

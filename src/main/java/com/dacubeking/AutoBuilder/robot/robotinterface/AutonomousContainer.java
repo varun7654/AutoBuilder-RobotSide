@@ -4,9 +4,9 @@ import com.dacubeking.AutoBuilder.robot.GuiAuto;
 import com.dacubeking.AutoBuilder.robot.NetworkAuto;
 import com.dacubeking.AutoBuilder.robot.annotations.AutoBuilderAccessible;
 import com.google.common.base.Preconditions;
-import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableEvent.Kind;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -20,10 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.Thread.State;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -98,24 +95,24 @@ public final class AutonomousContainer {
         printDebug("Initialized Accessible Instances");
 
         //Create the listener for network autos
-        autoPath.addListener(event ->
-                deserializerExecutor.execute(() -> { //Start deserializing on another thread
-                            System.out.println("Starting to Parse Network Autonomous");
-                            //Set networktable entries for the gui notifications
-                            pathProcessingStatusEntry.setDouble(1);
-                            networkAutoLock.lock();
-                            try {
-                                networkAuto = new NetworkAuto(); //Create the auto object which will start deserializing the json and the auto
-                            } finally {
-                                networkAutoLock.unlock();
-                            }
+        NetworkTableInstance.getDefault().addListener(autoPath, EnumSet.of(Kind.kValueRemote, Kind.kImmediate, Kind.kProperties), event -> {
+            deserializerExecutor.execute(() -> { //Start deserializing on another thread
+                System.out.println("Starting to Parse Network Autonomous");
+                //Set networktable entries for the gui notifications
+                pathProcessingStatusEntry.setDouble(1);
+                networkAutoLock.lock();
+                try {
+                    networkAuto = new NetworkAuto(); //Create the auto object which will start deserializing the json and the auto
+                } finally {
+                    networkAutoLock.unlock();
+                }
 
-                            // ready to be run
-                            System.out.println("Done Parsing Network Autonomous");
-                            //Set networktable entries for the gui notifications
-                            pathProcessingStatusEntry.setDouble(2);
-                        }
-                ), EntryListenerFlags.kNew | EntryListenerFlags.kUpdate | EntryListenerFlags.kImmediate);
+                // ready to be run
+                System.out.println("Done Parsing Network Autonomous");
+                //Set networktable entries for the gui notifications
+                pathProcessingStatusEntry.setDouble(2);
+            });
+        });
 
         this.isHolonomic = isHolonomic;
         this.commandTranslator = commandTranslator;

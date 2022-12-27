@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.Trajectory.State;
+import edu.wpi.first.wpilibj.Timer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +20,7 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Internal
 public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
+    public static final double PERIOD_TIME_S = 0.02;
     private final @NotNull Trajectory trajectory;
     private final @NotNull List<TimedRotation> rotations;
 
@@ -63,6 +65,7 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
 
         int rotationIndex = 1; // Start at the second rotation (the first is the starting rotation)
         while (!getCommandTranslator().isTrajectoryDone()) { // Wait till the auto is done
+            double startTime = Timer.getFPGATimestamp();
             final double elapsedTime = getCommandTranslator().getTrajectoryElapsedTime();
 
             if (rotationIndex < rotations.size() && elapsedTime > rotations.get(rotationIndex).time) {
@@ -85,7 +88,7 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
                 scriptsToExecuteByPercent.remove(0);
             }
             //noinspection BusyWait
-            Thread.sleep(10); // Throws an exception to exit if Interrupted
+            Thread.sleep((long) (1000 * Math.max(startTime + PERIOD_TIME_S - Timer.getFPGATimestamp(), 0)));
         }
         getCommandTranslator().stopRobot();
 

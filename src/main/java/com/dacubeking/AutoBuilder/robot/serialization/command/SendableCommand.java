@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -24,6 +27,7 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 @JsonIgnoreProperties(ignoreUnknown = true)
 class SendableCommand {
 
+    public static final double LOOPING_PERIOD_SECONDS = 0.02; // 50 Hz/20 ms
     @JsonProperty("methodName")
     @NotNull
     protected final String methodName;
@@ -33,6 +37,8 @@ class SendableCommand {
     @JsonProperty("argTypes") public final String[] argTypes;
 
     @JsonProperty("reflection") public final boolean reflection;
+
+    @JsonProperty("command") private final boolean command;
 
     private static final @NotNull Map<String, Function<String, Object>> INFERABLE_TYPES_PARSER;
 
@@ -57,11 +63,23 @@ class SendableCommand {
         INFERABLE_TYPES_PARSER.put(Boolean.class.getName(), Boolean::valueOf);
     }
 
+    private static final List<String> primitiveTypes = Arrays.asList(
+            int.class.getName(),
+            double.class.getName(),
+            float.class.getName(),
+            long.class.getName(),
+            short.class.getName(),
+            byte.class.getName(),
+            char.class.getName(),
+            boolean.class.getName()
+    );
+
     @JsonCreator
     protected SendableCommand(@JsonProperty("methodName") @NotNull String methodName,
                               @JsonProperty("args") String @NotNull [] args,
                               @JsonProperty("argTypes") String[] argTypes,
-                              @JsonProperty("reflection") boolean reflection) {
+                              @JsonProperty("reflection") boolean reflection,
+                              @JsonProperty("command") boolean command) {
         Method methodToCall = null;
         Object instance = null;
 
@@ -69,68 +87,106 @@ class SendableCommand {
         this.args = args;
         this.argTypes = argTypes;
         this.reflection = reflection;
+        this.command = command;
 
         objArgs = new Object[args.length];
 
-        for (int i = 0; i < args.length; i++) {
-            try {
-                if (INFERABLE_TYPES_PARSER.containsKey(argTypes[i])) {
-                    objArgs[i] = INFERABLE_TYPES_PARSER.get(argTypes[i]).apply(args[i]);
-                } else {
-                    objArgs[i] = Enum.valueOf(Class.forName(argTypes[i]).asSubclass(Enum.class), args[i]);
-                }
-            } catch (ClassNotFoundException e) {
-                DriverStation.reportError("Class not found: " + argTypes[i], e.getStackTrace());
-            } catch (ClassCastException e) {
-                DriverStation.reportError("Could not cast " + argTypes[i] + " to an enum", e.getStackTrace());
-            } finally {
-                if (objArgs[i] == null) { // We failed to parse the argument
-                    objArgs[i] = null;
-                }
-            }
-        }
-
-        if (reflection) {
-            String[] splitMethod = methodName.split("\\.");
-
-            String[] classNameArray = new String[splitMethod.length - 1];
-            System.arraycopy(splitMethod, 0, classNameArray, 0, classNameArray.length);
-            String className = String.join(".", classNameArray);
-
-            if (AutonomousContainer.getInstance().getAccessibleInstances().containsKey(className)) {
-                instance = AutonomousContainer.getInstance().getAccessibleInstances().get(className);
+        if (command) {
+            // If we're a command, the command name is the method name
+            if (AutonomousContainer.getInstance().getAccessibleInstances().containsKey(methodName)) {
+                instance = AutonomousContainer.getInstance().getAccessibleInstances().get(methodName);
             } else {
+                throwIllegalArgumentException("Command " + methodName + " not found. Make sure it's annotated with @AutoBuilderAccessible", null);
+            }
+            try {
+                Command castedCommand = (Command) instance; // Check that it's actually a command to prevent errors from occurring when we try to run it
+            } catch (ClassCastException e) {
+                throwIllegalArgumentException("Command " + methodName + " is not a Command. Make sure it's annotated with @AutoBuilderAccessible" +
+                        "Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
+            }
+        } else {
+            for (int i = 0; i < args.length; i++) {
                 try {
-                    Class<?> cls = Class.forName(className);
-                    Class<?>[] typeArray = Arrays.stream(objArgs).sequential().map(Object::getClass).toArray(Class[]::new);
-                    if (typeArray.length == 0) {
-                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1]);
+                    // Parse the arguments into the correct types
+                    if (INFERABLE_TYPES_PARSER.containsKey(argTypes[i])) {
+                        // Convert the string to the correct type
+                        objArgs[i] = INFERABLE_TYPES_PARSER.get(argTypes[i]).apply(args[i]);
                     } else {
-                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1],
-                                Arrays.stream(objArgs).sequential().map((o) -> getPrimitiveClass(o.getClass()))
-                                        .toArray(Class<?>[]::new));
-                    }
-                    methodToCall.setAccessible(true);
-                    if (!Modifier.isStatic(methodToCall.getModifiers())) {
-                        Method getInstance = cls.getDeclaredMethod("getInstance");
-                        getInstance.setAccessible(true);
-                        instance = getInstance.invoke(null);
+                        // Convert the string to the correct enum if it's not a primitive type
+                        objArgs[i] = Enum.valueOf(Class.forName(argTypes[i]).asSubclass(Enum.class), args[i]);
                     }
                 } catch (ClassNotFoundException e) {
-                    DriverStation.reportError("Class not found: " + className + ". " + e.getMessage(), e.getStackTrace());
+                    throwIllegalArgumentException("We couldn't find the class " + argTypes[i] +
+                            ". Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
+                } catch (ClassCastException e) {
+                    throwIllegalArgumentException("We couldn't cast the argument " + args[i] + " to the type " + argTypes[i] +
+                            ". Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
+                } catch (NumberFormatException e) {
+                    throwIllegalArgumentException("We couldn't parse number with the type " + args[i] + " to the type " + argTypes[i] +
+                            ". Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
+                }
+            }
+
+            if (reflection) {
+                String[] splitMethod = methodName.split("\\.");
+
+                String[] classNameArray = new String[splitMethod.length - 1];
+                System.arraycopy(splitMethod, 0, classNameArray, 0, classNameArray.length);
+                String className = String.join(".", classNameArray); // Get the class name that the method is in
+                try {
+                    Class<?> cls = Class.forName(className); // Get the class that the method is in
+
+                    // Get an array of the class types to find the correct method
+                    Class<?>[] typeArray = new Class[argTypes.length];
+                    for (int i = 0; i < objArgs.length; i++) {
+                        if (primitiveTypes.contains(argTypes[i])) {
+                            typeArray[i] = getPrimitiveClass(objArgs[i].getClass());
+                        } else {
+                            typeArray[i] = objArgs[i].getClass();
+                        }
+                    }
+
+                    if (typeArray.length == 0) {
+                        // If there are no arguments, just get the method with no arguments
+                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1]);
+                    } else {
+                        // Get the method with the correct arguments
+                        methodToCall = cls.getDeclaredMethod(splitMethod[splitMethod.length - 1], typeArray);
+                    }
+                    methodToCall.setAccessible(true); // Make the method accessible so that we can call it if it's private
+
+                    if (AutonomousContainer.getInstance().getAccessibleInstances().containsKey(className)) {
+                        // The user has specified an instance to use for this class, so use it
+                        instance = AutonomousContainer.getInstance().getAccessibleInstances().get(className);
+                    } else {
+                        if (!Modifier.isStatic(methodToCall.getModifiers())) {
+                            // If the method isn't static, we need to get an instance of the class
+                            Method getInstance = cls.getDeclaredMethod("getInstance"); // Get the getInstance method
+                            getInstance.setAccessible(true);
+                            instance = getInstance.invoke(null); // Invoke the getInstance method to get an instance of the class
+                        }
+                    }
+                } catch (ClassNotFoundException e) {
+                    throwIllegalArgumentException("Class not found: " + className + ". " + e.getMessage()
+                            + ". Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
                 } catch (NoSuchMethodException e) {
-                    DriverStation.reportError(
-                            "Could not find method : " + splitMethod[splitMethod.length - 1] + " in class " + className + ". " + e.getMessage(),
-                            e.getStackTrace());
+                    throwIllegalArgumentException("Could not find method : " + splitMethod[splitMethod.length - 1] + " in class "
+                            + className + ". " + e.getMessage()
+                            + ". Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
                 } catch (InvocationTargetException | IllegalAccessException e) {
-                    DriverStation.reportError("Could not get singleton reference in class " + className + " for method: " +
-                            splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e.getStackTrace());
+                    throwIllegalArgumentException("Could not get singleton reference in class " + className + " for method: " +
+                            splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e);
                 }
             }
         }
 
         this.methodToCall = methodToCall;
         this.instance = instance;
+    }
+
+    private static void throwIllegalArgumentException(@NotNull String errorMessage, @Nullable Exception e) {
+        DriverStation.reportError(errorMessage, false);
+        throw new IllegalArgumentException(errorMessage, e);
     }
 
     @JsonIgnoreProperties
@@ -171,61 +227,125 @@ class SendableCommand {
     /**
      * @throws InterruptedException            If the command fails do to an interrupt
      * @throws CommandExecutionFailedException If the command fails to execute for any other reason
-     * @throws ExecutionException              Should never happen (for some reason the future was cancelled or threw and
-     *                                         exception)
+     * @throws ExecutionException              Should never happen (for some reason the future was cancelled or threw and exception)
      */
     protected void execute() throws InterruptedException, CommandExecutionFailedException, ExecutionException {
-        if (methodToCall == null && reflection) {
-            CommandExecutionFailedException e = new CommandExecutionFailedException("Method to call is null");
-            e.fillInStackTrace();
-            throw e;
+        if (!command && methodToCall == null && reflection) {
+            throw new CommandExecutionFailedException("Method to call is null");
         }
-        if (getCommandTranslator().runOnMainThread) {
-            while (true) {
-                CompletableFuture<Object> future = new CompletableFuture<>();
-                getCommandTranslator().runOnMainThread(() -> {
-                    try {
-                        future.complete(invokeMethod());
-                    } catch (CommandExecutionFailedException | InterruptedException e) {
-                        future.complete(new UncheckedExecutionException(e));
+
+        if (command && instance == null) {
+            throw new CommandExecutionFailedException("Instance is null when calling a command");
+        }
+
+        boolean firstRun = true;
+
+        if (getCommandTranslator().runOnMainThread && reflection) {
+            try {
+                while (true) {
+                    double startTime = Timer.getFPGATimestamp(); // Time the command to keep the period constant
+
+                    CompletableFuture<Object> future = new CompletableFuture<>();
+                    final boolean finalFirstRun = firstRun;
+
+                    getCommandTranslator().runOnMainThread(() -> {
+                        try {
+                            future.complete(invokeMethod(finalFirstRun));
+                        } catch (CommandExecutionFailedException | InterruptedException e) {
+                            future.complete(new UncheckedExecutionException(e));
+                        }
+                    }); // Schedule the command to run on the main thread
+
+                    Object result = future.get(); // Wait for the command to finish
+
+                    if (result instanceof UncheckedExecutionException) { // If the command failed rethrow the exception
+                        Throwable exception = ((UncheckedExecutionException) result).getCause();
+                        if (exception instanceof InterruptedException) {
+                            throw (InterruptedException) exception;
+                        } else if (exception instanceof CommandExecutionFailedException) {
+                            throw (CommandExecutionFailedException) exception;
+                        } else {
+                            throw new CommandExecutionFailedException(
+                                    "Unexpected Exception. Please report this: " + exception.getMessage(), exception);
+                        }
                     }
-                });
 
-                Object result = future.get();
+                    if (!(result instanceof Boolean) || result.equals(true)) break; // If the command returns true or is not a boolean, stop the command
 
-                if (result instanceof UncheckedExecutionException) {
-                    Throwable exception = ((UncheckedExecutionException) result).getCause();
-                    if (exception instanceof InterruptedException) {
-                        throw (InterruptedException) exception;
-                    } else if (exception instanceof CommandExecutionFailedException) {
-                        throw (CommandExecutionFailedException) exception;
-                    } else {
-                        throw new CommandExecutionFailedException(
-                                "Unexpected Exception. Please report this: " + exception.getMessage(), exception);
+                    firstRun = false;
+                    //Keep executing the method if it returns false
+                    //noinspection BusyWait
+                    Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
+                }
+            } catch (InterruptedException e) {
+                if (command) {
+                    // If a command is interrupted, we want to end the command with the interrupted flag as true
+                    CompletableFuture<Object> future = new CompletableFuture<>();
+                    getCommandTranslator().runOnMainThread(() -> {
+                        try {
+                            Command command = (Command) instance;
+                            command.end(true);
+                            future.complete(null);
+                        } catch (Exception ex) {
+                            future.complete(ex); // If the command fails to end, we want to throw the exception
+                        }
+                    });
+                    @Nullable Object result = future.get(); // Wait for the command to finish
+                    if (result != null) {
+                        // If the command failed rethrow the exception
+                        Exception ex = (Exception) result;
+                        throw new CommandExecutionFailedException("Failed to interrupt command " + methodName + ": " + ex.getMessage(), ex);
+                    }
+                }
+                throw e; // rethrow the interrupt
+            }
+        } else {
+            try {
+                while (true) {
+                    double startTime = Timer.getFPGATimestamp();
+                    Object result = invokeMethod(firstRun);
+                    if (!(result instanceof Boolean) || result.equals(true)) break;
+                    firstRun = false;
+
+                    //Keep executing the method if it returns false
+                    //noinspection BusyWait
+                    Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
+                }
+            } catch (InterruptedException e) {
+                if (command) {
+                    // If a command is interrupted, we want to end the command with the interrupted flag as true
+                    try {
+                        ((Command) instance).end(true);
+                    } catch (Exception ex) {
+                        throw new CommandExecutionFailedException("Failed to interrupt command " + methodName + ": " + ex.getMessage(), ex);
                     }
                 }
 
-                if (!(result instanceof Boolean) || result.equals(true)) break;
-                //Keep executing the method if it returns false
-                //noinspection BusyWait
-                Thread.sleep(20);
-            }
-        } else {
-            while (true) {
-                Object result = invokeMethod();
-                if (!(result instanceof Boolean) || result.equals(true)) break;
-                //Keep executing the method if it returns false
-                //noinspection BusyWait
-                Thread.sleep(20);
+                throw e; // rethrow the interrupt
             }
         }
     }
 
-    private @Nullable Object invokeMethod() throws InterruptedException, CommandExecutionFailedException {
+    private @Nullable Object invokeMethod(boolean firstRun) throws InterruptedException, CommandExecutionFailedException {
         try {
             if (reflection) {
-                assert methodToCall != null;
-                return methodToCall.invoke(instance, objArgs);
+                if (command) {
+                    assert instance != null;
+                    Command command = (Command) instance;
+                    if (firstRun) {
+                        command.initialize();
+                    }
+                    command.execute();
+                    if (command.isFinished()) {
+                        command.end(false);
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    assert methodToCall != null;
+                    return methodToCall.invoke(instance, objArgs); // If the method returns true & is a boolean, stop executing it
+                }
             } else {
                 switch (methodName) {
                     case "print":
@@ -238,7 +358,7 @@ class SendableCommand {
                 return null;
             }
         } catch (InterruptedException e) {
-            throw new InterruptedException("Interrupted while executing a script");
+            throw e;
         } catch (Exception e) {
             throw new CommandExecutionFailedException("Could not invoke method " + methodName + " due to: " + e.getMessage(), e);
         }

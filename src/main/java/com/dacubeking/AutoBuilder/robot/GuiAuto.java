@@ -11,6 +11,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +24,9 @@ import static com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContaine
 
 public class GuiAuto implements Runnable {
 
-    private Autonomous autonomous;
-    private Pose2d initialPose;
+    private static final Autonomous DO_NOTHING_AUTONOMOUS = new Autonomous(new ArrayList<>());
+    private @NotNull Autonomous autonomous = DO_NOTHING_AUTONOMOUS; // default to do nothing in case of some error
+    private @Nullable Pose2d initialPose;
 
     /**
      * Ensure you are creating the objects for your auto on robot init. The roborio will take multiple seconds to initialize the auto.
@@ -45,6 +48,7 @@ public class GuiAuto implements Runnable {
             autonomous = (Autonomous) Serializer.deserialize(autonomousJson, Autonomous.class, true);
         } catch (IOException e) {
             DriverStation.reportError("Failed to deserialize auto. " + e.getMessage(), e.getStackTrace());
+            // The do nothing auto will be used
         }
         init();
     }
@@ -75,6 +79,11 @@ public class GuiAuto implements Runnable {
             DriverStation.reportError("Uncaught exception in auto thread: " + e.getMessage(), e.getStackTrace());
             getCommandTranslator().stopRobot();
         });
+
+        if (autonomous == DO_NOTHING_AUTONOMOUS) {
+            DriverStation.reportError("No auto was loaded. Doing nothing.", false);
+            return;
+        }
 
         AutonomousContainer.getInstance().printDebug("Started Running: " + Timer.getFPGATimestamp());
 

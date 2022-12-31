@@ -1,5 +1,6 @@
 package com.dacubeking.AutoBuilder.robot.serialization.command;
 
+import com.dacubeking.AutoBuilder.robot.annotations.RequireWait;
 import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -39,6 +40,8 @@ class SendableCommand {
     @JsonProperty("reflection") public final boolean reflection;
 
     @JsonProperty("command") private final boolean command;
+
+    private final boolean shouldWait;
 
     private static final @NotNull Map<String, Function<String, Object>> INFERABLE_TYPES_PARSER;
 
@@ -82,6 +85,7 @@ class SendableCommand {
                               @JsonProperty("command") boolean command) {
         Method methodToCall = null;
         Object instance = null;
+        boolean shouldWait;
 
         this.methodName = methodName;
         this.args = args;
@@ -104,6 +108,8 @@ class SendableCommand {
                 throwIllegalArgumentException("Command " + methodName + " is not a Command. Make sure it's annotated with @AutoBuilderAccessible" +
                         "Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
             }
+            assert instance != null;
+            shouldWait = instance.getClass().isAnnotationPresent(RequireWait.class);
         } else {
             for (int i = 0; i < args.length; i++) {
                 try {
@@ -178,10 +184,12 @@ class SendableCommand {
                             splitMethod[splitMethod.length - 1] + ". " + e.getMessage(), e);
                 }
             }
+            shouldWait = methodToCall != null && methodToCall.isAnnotationPresent(RequireWait.class);
         }
 
         this.methodToCall = methodToCall;
         this.instance = instance;
+        this.shouldWait = shouldWait;
     }
 
     private static void throwIllegalArgumentException(@NotNull String errorMessage, @Nullable Exception e) {
@@ -238,23 +246,25 @@ class SendableCommand {
             throw new CommandExecutionFailedException("Instance is null when calling a command");
         }
 
-        boolean firstRun = true;
-
+        // The built command's shouldn't be run on the main thread
         if (getCommandTranslator().runOnMainThread && reflection) {
-            try {
+            if (!command) {
                 while (true) {
                     double startTime = Timer.getFPGATimestamp(); // Time the command to keep the period constant
 
                     CompletableFuture<Object> future = new CompletableFuture<>();
-                    final boolean finalFirstRun = firstRun;
 
                     getCommandTranslator().runOnMainThread(() -> {
                         try {
-                            future.complete(invokeMethod(finalFirstRun));
+                            future.complete(invokeMethod());
                         } catch (CommandExecutionFailedException | InterruptedException e) {
                             future.complete(new UncheckedExecutionException(e));
                         }
                     }); // Schedule the command to run on the main thread
+
+                    if (!shouldWait) {
+                        return;
+                    }
 
                     Object result = future.get(); // Wait for the command to finish
 
@@ -272,88 +282,51 @@ class SendableCommand {
 
                     if (!(result instanceof Boolean) || result.equals(true)) break; // If the command returns true or is not a boolean, stop the command
 
-                    firstRun = false;
                     //Keep executing the method if it returns false
                     //noinspection BusyWait
                     Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
                 }
-            } catch (InterruptedException e) {
-                if (command) {
-                    // If a command is interrupted, we want to end the command with the interrupted flag as true
-                    CompletableFuture<Object> future = new CompletableFuture<>();
-                    getCommandTranslator().runOnMainThread(() -> {
-                        try {
-                            Command command = (Command) instance;
-                            command.end(true);
-                            future.complete(null);
-                        } catch (Exception ex) {
-                            future.complete(ex); // If the command fails to end, we want to throw the exception
-                        }
-                    });
-                    @Nullable Object result = future.get(); // Wait for the command to finish
-                    if (result != null) {
-                        // If the command failed rethrow the exception
-                        Exception ex = (Exception) result;
-                        throw new CommandExecutionFailedException("Failed to interrupt command " + methodName + ": " + ex.getMessage(), ex);
-                    }
+            } else {
+                getCommandTranslator().runOnMainThread(() -> ((Command) instance).schedule());
+
+                if (shouldWait) {
+                    CompletableFuture<Boolean> future;
+                    do {
+                        //Wait for the command to finish
+                        //noinspection BusyWait
+                        Thread.sleep((long) LOOPING_PERIOD_SECONDS * 1000);
+                        future = new CompletableFuture<>();
+                        final var finalFuture = future;
+                        getCommandTranslator().runOnMainThread(() -> finalFuture.complete(((Command) instance).isScheduled()));
+                    } while (future.get());
                 }
-                throw e; // rethrow the interrupt
             }
         } else {
-            try {
-                while (true) {
-                    double startTime = Timer.getFPGATimestamp();
-                    Object result = invokeMethod(firstRun);
-                    if (!(result instanceof Boolean) || result.equals(true)) break;
-                    firstRun = false;
+            if (command) {
+                throw new CommandExecutionFailedException("Commands must be run on the main thread");
+            }
+            while (true) {
+                double startTime = Timer.getFPGATimestamp();
+                Object result = invokeMethod();
+                if (shouldWait || !(result instanceof Boolean) || result.equals(true)) break;
 
-                    //Keep executing the method if it returns false
-                    //noinspection BusyWait
-                    Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
-                }
-            } catch (InterruptedException e) {
-                if (command) {
-                    // If a command is interrupted, we want to end the command with the interrupted flag as true
-                    try {
-                        ((Command) instance).end(true);
-                    } catch (Exception ex) {
-                        throw new CommandExecutionFailedException("Failed to interrupt command " + methodName + ": " + ex.getMessage(), ex);
-                    }
-                }
-
-                throw e; // rethrow the interrupt
+                //Keep executing the method if it returns false
+                //noinspection BusyWait
+                Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
             }
         }
     }
 
-    private @Nullable Object invokeMethod(boolean firstRun) throws InterruptedException, CommandExecutionFailedException {
+    private @Nullable Object invokeMethod() throws InterruptedException, CommandExecutionFailedException {
+        assert !command;
         try {
             if (reflection) {
-                if (command) {
-                    assert instance != null;
-                    Command command = (Command) instance;
-                    if (firstRun) {
-                        command.initialize();
-                    }
-                    command.execute();
-                    if (command.isFinished()) {
-                        command.end(false);
-                        return true;
-                    } else {
-                        return false;
-                    }
-                } else {
-                    assert methodToCall != null;
-                    return methodToCall.invoke(instance, objArgs); // If the method returns true & is a boolean, stop executing it
-                }
+                assert methodToCall != null;
+                return methodToCall.invoke(instance, objArgs); // If the method returns true & is a boolean, stop executing it
             } else {
                 switch (methodName) {
-                    case "print":
-                        System.out.println(objArgs[0]);
-                        break;
-                    case "sleep":
-                        Thread.sleep((long) objArgs[0]);
-                        break;
+                    case "print" -> System.out.println(objArgs[0]);
+                    case "sleep" -> Thread.sleep((long) objArgs[0]);
                 }
                 return null;
             }

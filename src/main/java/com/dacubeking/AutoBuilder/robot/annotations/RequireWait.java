@@ -21,10 +21,11 @@ import java.lang.annotation.Target;
  * <p>
  * - For Commands: This means the command will be submitted to the scheduler, but the AutoBuilder will not wait for it to finish. The CommandScheduler will run the command in the background.
  * <p>
- * - For other methods: This means the AutoBuilder will not check if the method returns true before continuing.
+ * - For other methods: This means the AutoBuilder will not check if the method returns true before continuing. Only one iteration of the method will be run.
  * <p>
- * <STRONG>NOTE:</STRONG> Only annotate classes that are commands with this annotation. If the class is not a command, the annotation will be ignored.
- * Methods can be annotated with this annotation regardless of whether or not they are commands.
+ * <STRONG>NOTE:</STRONG> Only annotate classes/fields that are commands with this annotation. If the class is not a command, the annotation will be ignored.
+ * Only methods that you're intending to run from the AutoBuilder should be annotated with this annotation. Don't annotate methods that return commands, as the AutoBuilder will not pick up the
+ * annotation. (Instead, save the returned command to a field, and annotate the field with this annotation and {@link AutoBuilderAccessible}).
  * <p>
  * Example Use Case:
  * <p>
@@ -32,7 +33,7 @@ import java.lang.annotation.Target;
  * shooter is done shooting before continuing.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
 public @interface RequireWait {
 
 }

@@ -187,6 +187,8 @@ class SendableCommand {
             shouldWait = methodToCall != null && methodToCall.isAnnotationPresent(RequireWait.class);
         }
 
+        shouldWait = shouldWait || AutonomousContainer.getInstance().getRequireWaitObjects().contains(instance);
+
         this.methodToCall = methodToCall;
         this.instance = instance;
         this.shouldWait = shouldWait;

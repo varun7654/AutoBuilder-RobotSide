@@ -29,8 +29,16 @@ final class ReflectionClassData {
     @JsonProperty private final boolean isAnnotatedAsAccessible;
     @JsonProperty private final String alias;
 
+    ReflectionClassData(@NotNull Object instance) {
+        this(instance.getClass(), instance);
+    }
 
     ReflectionClassData(@NotNull Class<?> clazz) {
+        this(clazz, null);
+    }
+
+
+    ReflectionClassData(@NotNull Class<?> clazz, @Nullable Object instance) {
         this.fullName = clazz.getName();
         Method[] methods = clazz.getDeclaredMethods();
         this.methods = new ReflectionMethodData[methods.length];
@@ -57,11 +65,16 @@ final class ReflectionClassData {
         this.isEnum = clazz.isEnum();
         isCommand = isCommand(clazz);
 
-        this.isAnnotatedAsAccessible = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
-                .anyMatch(entry -> entry.getValue().getClass().equals(clazz));
+        if (clazz.isAnonymousClass()) {
+            this.isAnnotatedAsAccessible = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
+                    .anyMatch(entry -> entry.getValue() == instance);
+        } else {
+            this.isAnnotatedAsAccessible = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
+                    .anyMatch(entry -> entry.getValue().getClass().equals(clazz));
+        }
         if (isAnnotatedAsAccessible) {
             this.alias = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
-                    .filter(entry -> entry.getValue().getClass().equals(clazz))
+                    .filter(entry -> entry.getValue() == instance)
                     .map(Entry::getKey)
                     .filter(s -> !s.equals(fullName))
                     .findFirst()

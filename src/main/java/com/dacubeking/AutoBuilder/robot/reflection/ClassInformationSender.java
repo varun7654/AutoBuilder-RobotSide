@@ -55,7 +55,7 @@ public final class ClassInformationSender {
 
             AutonomousContainer.getInstance().getAccessibleInstances().values().stream()
                     .filter(o -> o.getClass().isAnonymousClass()) // The other instances are already in the list
-                    .forEach((value) -> reflectionClassDataList.reflectionClassData.add(new ReflectionClassData(value.getClass())));
+                    .forEach((value) -> reflectionClassDataList.reflectionClassData.add(new ReflectionClassData(value)));
 
             System.out.println("Found " + reflectionClassDataList.reflectionClassData.size() + " classes with "
                     + AutonomousContainer.getInstance().getAccessibleInstances().entrySet().size() + " annotated instances found");

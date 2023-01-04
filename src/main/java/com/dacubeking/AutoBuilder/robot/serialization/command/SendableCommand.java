@@ -43,6 +43,8 @@ class SendableCommand {
 
     private final boolean shouldWait;
 
+    private final boolean shouldCancelCommand;
+
     private static final @NotNull Map<String, Function<String, Object>> INFERABLE_TYPES_PARSER;
 
     static {
@@ -108,9 +110,14 @@ class SendableCommand {
                 throwIllegalArgumentException("Command " + methodName + " is not a Command. Make sure it's annotated with @AutoBuilderAccessible" +
                         "Try rebuilding your robotCodeData.json by rerunning your robot code in simulation.", e);
             }
+
+
+            shouldCancelCommand = args.length > 0 && Boolean.parseBoolean(args[0]);
+
             assert instance != null;
             shouldWait = instance.getClass().isAnnotationPresent(RequireWait.class);
         } else {
+            shouldCancelCommand = false;
             for (int i = 0; i < args.length; i++) {
                 try {
                     // Parse the arguments into the correct types
@@ -289,18 +296,22 @@ class SendableCommand {
                     Thread.sleep((long) Math.max((LOOPING_PERIOD_SECONDS - (Timer.getFPGATimestamp() - startTime)) * 1000, 0));
                 }
             } else {
-                getCommandTranslator().runOnMainThread(() -> ((Command) instance).schedule());
+                if (shouldCancelCommand) {
+                    getCommandTranslator().runOnMainThread(() -> ((Command) instance).cancel());
+                } else {
+                    getCommandTranslator().runOnMainThread(() -> ((Command) instance).schedule());
 
-                if (shouldWait) {
-                    CompletableFuture<Boolean> future;
-                    do {
-                        //Wait for the command to finish
-                        //noinspection BusyWait
-                        Thread.sleep((long) LOOPING_PERIOD_SECONDS * 1000);
-                        future = new CompletableFuture<>();
-                        final var finalFuture = future;
-                        getCommandTranslator().runOnMainThread(() -> finalFuture.complete(((Command) instance).isScheduled()));
-                    } while (future.get());
+                    if (shouldWait) {
+                        CompletableFuture<Boolean> future;
+                        do {
+                            //Wait for the command to finish
+                            //noinspection BusyWait
+                            Thread.sleep((long) LOOPING_PERIOD_SECONDS * 1000);
+                            future = new CompletableFuture<>();
+                            final var finalFuture = future;
+                            getCommandTranslator().runOnMainThread(() -> finalFuture.complete(((Command) instance).isScheduled()));
+                        } while (future.get());
+                    }
                 }
             }
         } else {

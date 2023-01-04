@@ -14,8 +14,7 @@ class ReflectionClassDataList {
     }
 
     @JsonCreator
-    ReflectionClassDataList(ArrayList<ReflectionClassData> reflectionClassData,
-                            ArrayList<ReflectionClassData> instanceLocations) {
+    ReflectionClassDataList(ArrayList<ReflectionClassData> reflectionClassData) {
         this.reflectionClassData = reflectionClassData;
     }
 }

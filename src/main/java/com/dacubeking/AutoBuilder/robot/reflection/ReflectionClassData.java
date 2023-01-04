@@ -1,12 +1,15 @@
 package com.dacubeking.AutoBuilder.robot.reflection;
 
+import com.dacubeking.AutoBuilder.robot.robotinterface.AutonomousContainer;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Map.Entry;
 
 final class ReflectionClassData {
     @JsonProperty
@@ -23,8 +26,19 @@ final class ReflectionClassData {
     @JsonProperty private final int modifiers;
     @JsonProperty private final boolean isEnum;
     @JsonProperty private final boolean isCommand;
+    @JsonProperty private final boolean isAnnotatedAsAccessible;
+    @JsonProperty private final String alias;
+
+    ReflectionClassData(@NotNull Object instance) {
+        this(instance.getClass(), instance);
+    }
 
     ReflectionClassData(@NotNull Class<?> clazz) {
+        this(clazz, null);
+    }
+
+
+    ReflectionClassData(@NotNull Class<?> clazz, @Nullable Object instance) {
         this.fullName = clazz.getName();
         Method[] methods = clazz.getDeclaredMethods();
         this.methods = new ReflectionMethodData[methods.length];
@@ -46,13 +60,32 @@ final class ReflectionClassData {
             this.superClass = "";
         }
 
-
-        interfaces = Arrays.stream(clazz.getInterfaces()).map(Class::getName).toArray(String[]::new);
-
-        modifiers = clazz.getModifiers();
+        this.interfaces = Arrays.stream(clazz.getInterfaces()).map(Class::getName).toArray(String[]::new);
+        this.modifiers = clazz.getModifiers();
         this.isEnum = clazz.isEnum();
-
         isCommand = isCommand(clazz);
+
+        if (clazz.isAnonymousClass()) {
+            this.isAnnotatedAsAccessible = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
+                    .anyMatch(entry -> entry.getValue() == instance);
+        } else {
+            this.isAnnotatedAsAccessible = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
+                    .anyMatch(entry -> entry.getValue().getClass().equals(clazz));
+        }
+        if (isAnnotatedAsAccessible) {
+            this.alias = AutonomousContainer.getInstance().getAccessibleInstances().entrySet().stream()
+                    .filter(entry -> entry.getValue() == instance)
+                    .map(Entry::getKey)
+                    .filter(s -> !s.equals(fullName))
+                    .findFirst()
+                    .orElse("");
+        } else {
+            this.alias = "";
+        }
+
+        if (this.alias.equals("") && clazz.isAnonymousClass()) {
+            DriverStation.reportWarning("Anonymous class found without an alias. This should be impossible. Please report this: " + clazz.getName(), false);
+        }
     }
 
     private boolean isCommand(Class<?> clazz) {
@@ -85,6 +118,8 @@ final class ReflectionClassData {
                 ", modifiers=" + modifiers +
                 ", isEnum=" + isEnum +
                 ", isCommand=" + isCommand +
+                ", isAnnotatedAsAccessible=" + isAnnotatedAsAccessible +
+                ", alias='" + alias + '\'' +
                 '}';
     }
 }

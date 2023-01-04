@@ -9,17 +9,12 @@ class ReflectionClassDataList {
     @JsonProperty
     ArrayList<ReflectionClassData> reflectionClassData = new ArrayList<>();
 
-    @JsonProperty
-    ArrayList<String> instanceLocations = new ArrayList<>();
-
 
     protected ReflectionClassDataList() {
     }
 
     @JsonCreator
-    ReflectionClassDataList(ArrayList<ReflectionClassData> reflectionClassData,
-                            ArrayList<String> instanceLocations) {
+    ReflectionClassDataList(ArrayList<ReflectionClassData> reflectionClassData) {
         this.reflectionClassData = reflectionClassData;
-        this.instanceLocations = instanceLocations;
     }
 }

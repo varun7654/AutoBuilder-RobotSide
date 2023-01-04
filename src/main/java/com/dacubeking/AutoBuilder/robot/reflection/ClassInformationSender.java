@@ -53,10 +53,12 @@ public final class ClassInformationSender {
                 reflectionClassDataList.reflectionClassData.add(new ReflectionClassData(aClass));
             }
 
-            reflectionClassDataList.instanceLocations.addAll(AutonomousContainer.getInstance().getAccessibleInstances().keySet());
+            AutonomousContainer.getInstance().getAccessibleInstances().values().stream()
+                    .filter(o -> o.getClass().isAnonymousClass()) // The other instances are already in the list
+                    .forEach((value) -> reflectionClassDataList.reflectionClassData.add(new ReflectionClassData(value)));
 
             System.out.println("Found " + reflectionClassDataList.reflectionClassData.size() + " classes with "
-                    + reflectionClassDataList.instanceLocations.size() + " defined instances found.");
+                    + AutonomousContainer.getInstance().getAccessibleInstances().entrySet().size() + " annotated instances found");
 
             if (file != null) {
                 file.getParentFile().mkdir();

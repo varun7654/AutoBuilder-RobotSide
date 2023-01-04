@@ -3,6 +3,7 @@ package com.dacubeking.AutoBuilder.robot.robotinterface;
 import com.dacubeking.AutoBuilder.robot.GuiAuto;
 import com.dacubeking.AutoBuilder.robot.NetworkAuto;
 import com.dacubeking.AutoBuilder.robot.annotations.AutoBuilderAccessible;
+import com.dacubeking.AutoBuilder.robot.annotations.RequireWait;
 import com.google.common.base.Preconditions;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 public final class AutonomousContainer {
 
@@ -60,6 +62,7 @@ public final class AutonomousContainer {
     private final ConcurrentHashMap<File, GuiAuto> autonomousList = new ConcurrentHashMap<>();
     private final @NotNull Hashtable<String, Object> parentObjects = new Hashtable<>();
 
+    private final @NotNull List<Object> requireWaitObjects = Collections.synchronizedList(new ArrayList<>());
     private static final String AUTO_DIRECTORY = Filesystem.getDeployDirectory().getAbsoluteFile() + "/autos/";
 
     /**
@@ -144,6 +147,9 @@ public final class AutonomousContainer {
                 + ((double) (System.currentTimeMillis() - startLoadingTime)) / 1000 + "s");
     }
 
+
+    private static final Pattern VALID_ALIAS_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
+
     /**
      * Uses the given parent objects to find all fields/methods/constructors annotated with {@link AutoBuilderAccessible} to store them for use in autos.
      *
@@ -159,14 +165,32 @@ public final class AutonomousContainer {
                             method.setAccessible(true);
                             Object instance = method.invoke(parentObject);
 
-                            if (this.parentObjects.contains(instance.getClass().getName())) {
-                                IllegalStateException exception = new IllegalStateException(
-                                        "There are multiple @AutoBuilderAccessible for the same type\n" +
-                                                "Remove the @AutoBuilderAccessible annotation at " + method.getName());
-                                exception.fillInStackTrace();
-                                throw exception;
+                            String name;
+                            if (method.getAnnotation(AutoBuilderAccessible.class).alias().isEmpty()) {
+                                if (instance.getClass().isAnonymousClass()) {
+                                    name = method.getName();
+                                } else {
+                                    name = instance.getClass().getName();
+                                }
+                            } else {
+                                name = method.getAnnotation(AutoBuilderAccessible.class).alias();
+                                if (!VALID_ALIAS_PATTERN.matcher(name).matches()) {
+                                    throw new IllegalArgumentException("Invalid alias name: " + name +
+                                            ". Alias names must only contain letters, numbers, and underscores");
+                                }
                             }
-                            this.parentObjects.put(instance.getClass().getName(), instance);
+
+                            if (this.parentObjects.contains(name)) {
+                                throw new IllegalStateException(
+                                        "There are multiple @AutoBuilderAccessible for the same type/alias\n" +
+                                                "Remove the @AutoBuilderAccessible annotation from the method " +
+                                                "with the name/alias: " + name);
+                            }
+
+                            if (method.isAnnotationPresent(RequireWait.class)) {
+                                this.requireWaitObjects.add(instance);
+                            }
+                            this.parentObjects.put(name, instance);
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());
                             if (crashOnError) {
@@ -182,15 +206,32 @@ public final class AutonomousContainer {
                         try {
                             field.setAccessible(true);
                             Object instance = field.get(parentObject);
-                            if (this.parentObjects.contains(instance.getClass().getName())) {
-                                IllegalStateException exception = new IllegalStateException(
-                                        "There are multiple @AutoBuilderAccessible for the same type\n" +
-                                                "Remove the @AutoBuilderAccessible annotation at " + field.getName());
-                                exception.fillInStackTrace();
-                                throw exception;
+                            String name;
+                            if (field.getAnnotation(AutoBuilderAccessible.class).alias().isEmpty()) {
+                                if (instance.getClass().isAnonymousClass()) {
+                                    name = field.getName();
+                                } else {
+                                    name = instance.getClass().getName();
+                                }
+                            } else {
+                                name = field.getAnnotation(AutoBuilderAccessible.class).alias();
+                                if (!VALID_ALIAS_PATTERN.matcher(name).matches()) {
+                                    throw new IllegalArgumentException("Invalid alias name: " + name +
+                                            ". Alias names must only contain letters, numbers, and underscores");
+                                }
                             }
 
-                            this.parentObjects.put(instance.getClass().getName(), instance);
+                            if (this.parentObjects.contains(name)) {
+                                throw new IllegalStateException(
+                                        "There are multiple @AutoBuilderAccessible for the same type/alias\n" +
+                                                "Remove the @AutoBuilderAccessible annotation from the field " +
+                                                "with the name/alias: " + name);
+                            }
+
+                            if (field.isAnnotationPresent(RequireWait.class)) {
+                                this.requireWaitObjects.add(instance);
+                            }
+                            this.parentObjects.put(name, instance);
                         } catch (IllegalAccessException e) {
                             DriverStation.reportError("Failed to get accessible instance: " + e.getMessage(), e.getStackTrace());
                             if (crashOnError) {
@@ -290,6 +331,11 @@ public final class AutonomousContainer {
     @Internal
     public @NotNull Hashtable<String, Object> getAccessibleInstances() {
         return parentObjects;
+    }
+
+    @Internal
+    public List<Object> getRequireWaitObjects() {
+        return requireWaitObjects;
     }
 
     @SuppressWarnings("unused")

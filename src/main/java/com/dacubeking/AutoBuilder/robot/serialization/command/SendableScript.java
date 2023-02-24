@@ -73,4 +73,13 @@ public class SendableScript implements Comparable<SendableScript> {
     public int compareTo(@NotNull SendableScript o) {
         return Double.compare(delay, o.delay);
     }
+
+    @Override
+    public String toString() {
+        return "SendableScript{" +
+                "delayType=" + delayType +
+                ", delay=" + delay +
+                ", commands=" + commands +
+                '}';
+    }
 }

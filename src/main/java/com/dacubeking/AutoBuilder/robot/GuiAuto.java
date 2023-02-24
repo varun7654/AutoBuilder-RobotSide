@@ -129,4 +129,12 @@ public class GuiAuto implements Runnable {
         System.out.println("Finished Autonomous at " + Timer.getFPGATimestamp());
         getCommandTranslator().stopRobot();
     }
+
+    @Override
+    public String toString() {
+        return "GuiAuto{" +
+                "initialPose=" + initialPose +
+                ",autonomous=" + autonomous +
+                '}';
+    }
 }

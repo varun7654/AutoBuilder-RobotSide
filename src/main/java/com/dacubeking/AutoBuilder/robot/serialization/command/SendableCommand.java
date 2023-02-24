@@ -349,4 +349,20 @@ class SendableCommand {
             throw new CommandExecutionFailedException("Could not invoke method " + methodName + " due to: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "SendableCommand{" +
+                "methodName='" + methodName + '\'' +
+                ", args=" + Arrays.toString(args) +
+                ", argTypes=" + Arrays.toString(argTypes) +
+                ", reflection=" + reflection +
+                ", command=" + command +
+                ", shouldWait=" + shouldWait +
+                ", shouldCancelCommand=" + shouldCancelCommand +
+                ", instance=" + instance +
+                ", methodToCall=" + methodToCall +
+                ", objArgs=" + Arrays.toString(objArgs) +
+                '}';
+    }
 }

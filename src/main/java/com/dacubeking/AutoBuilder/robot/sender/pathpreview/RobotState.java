@@ -25,8 +25,7 @@ public class RobotState {
      * @param vy     The y velocity (meters/second).
      * @param vTheta The angular velocity (radians/second).
      * @param time   Timestamp of this position (seconds).
-     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *               that is plotted in the GUI)
+     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(double x, double y, double theta, double vx, double vy, double vTheta, double time, String name) {
         this.x = x;
@@ -77,8 +76,7 @@ public class RobotState {
      * @param vx     The x velocity (meters/second).
      * @param vy     The y velocity (meters/second).
      * @param vTheta The angular velocity (radians/second).
-     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *               that is plotted in the GUI)
+     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(double x, double y, double theta, double vx, double vy, double vTheta, String name) {
         this(x, y, theta, vx, vy, vTheta, Timer.getFPGATimestamp(), name);
@@ -92,8 +90,7 @@ public class RobotState {
      * @param vx     The x velocity (meters/second).
      * @param vy     The y velocity (meters/second).
      * @param vTheta The angular velocity (radians/second).
-     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *               that is plotted in the GUI)
+     * @param name   name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(Pose2d pose, double vx, double vy, double vTheta, String name) {
         this(pose.getX(), pose.getY(), pose.getRotation().getRadians(), vx, vy, vTheta, name);
@@ -132,8 +129,7 @@ public class RobotState {
      * @param x     The x position (meters).
      * @param y     The y position (meters).
      * @param theta The angle (radians).
-     * @param name  name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *              that is plotted in the GUI)
+     * @param name  name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(double x, double y, double theta, String name) {
         this(x, y, theta, 0, 0, 0, name);
@@ -144,8 +140,7 @@ public class RobotState {
      * Constructs a new RobotState.
      *
      * @param pose The pose of the robot (meters, radians).
-     * @param name name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *             that is plotted in the GUI)
+     * @param name name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(Pose2d pose, String name) {
         this(pose.getX(), pose.getY(), pose.getRotation().getRadians(), name);
@@ -201,8 +196,7 @@ public class RobotState {
      * @param y     The y position (meters).
      * @param theta The angle (radians).
      * @param time  Timestamp of this position.
-     * @param name  name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *              that is plotted in the GUI)
+     * @param name  name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(double x, double y, double theta, double time, String name) {
         this(x, y, theta, 0, 0, 0, time, name);
@@ -213,8 +207,7 @@ public class RobotState {
      *
      * @param pose The pose of the robot.
      * @param time Timestamp of this position.
-     * @param name name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one
-     *             that is plotted in the GUI)
+     * @param name name of this position. (ex: odometry pose, vision pose, etc.) ("Robot Position" is the default and is the one that is plotted in the GUI)
      */
     public RobotState(Pose2d pose, double time, String name) {
         this(pose.getX(), pose.getY(), pose.getRotation().getRadians(), time, name);
@@ -224,5 +217,12 @@ public class RobotState {
     @Override
     public String toString() {
         return x + "," + y + "," + theta + "," + vx + "," + vy + "," + vTheta + "," + time + "," + name;
+    }
+
+    /**
+     * @return Number of bytes this object will take up when converted to a byte array.
+     */
+    public int size() {
+        return Double.BYTES * 7 + name.length() * Character.BYTES;
     }
 }

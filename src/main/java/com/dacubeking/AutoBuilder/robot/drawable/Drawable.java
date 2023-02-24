@@ -14,4 +14,10 @@ public abstract class Drawable {
 
     @Override
     abstract public String toString();
+
+    abstract public byte[] toBytes();
+
+    abstract public Drawable fromBytes(byte[] bytes);
+
+    abstract public int size();
 }

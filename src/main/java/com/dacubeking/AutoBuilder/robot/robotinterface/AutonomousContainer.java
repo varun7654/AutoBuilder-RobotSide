@@ -470,7 +470,7 @@ public final class AutonomousContainer {
                 autoThread.interrupt();
 
                 double nextStackTracePrint = Timer.getFPGATimestamp() + 1;
-                while (!autoThread.isAlive() || autoThread.getState() == State.TERMINATED) {
+                while (autoThread.isAlive() && autoThread.getState() != State.TERMINATED) {
                     if (Timer.getFPGATimestamp() > nextStackTracePrint) {
                         Exception throwable = new Exception(
                                 "Waiting for auto to die. autoThread.getState() = " + autoThread.getState() +

@@ -365,24 +365,20 @@ public final class AutonomousContainer {
         return autonomousList.keySet();
     }
 
+
     /**
-     * Run an auto with the given name and side. These names should match the names given by {@link #getAutonomousNames()}.
-     * <p>
-     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to perform checks to determine if the auto is sided or not.
-     *
-     * @param name                    The name of the auto to run.
-     * @param side                    The side of the robot that the auto will be run on.
-     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
+     * @param name             The name of the auto to get
+     * @param side             The side of the field to get the auto for
+     * @param allowNetworkAuto If true, the network auto will be returned if one is available
+     * @return The auto with the given name, or null if it is not found
      */
-    @SuppressWarnings("unused")
-    public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
+    public synchronized @Nullable GuiAuto getAuto(String name, String side, boolean allowNetworkAuto) {
         @Nullable GuiAuto selectedAuto;
         networkAutoLock.lock();
         try {
-            if (allowRunningNetworkAuto && networkAuto != null) {
+            if (allowNetworkAuto && networkAuto != null) {
                 selectedAuto = networkAuto;
             } else {
-
                 File autoPath = new File(AUTO_DIRECTORY + side + (side.endsWith("/") ? "" : "/") + name + ".auto");
 
                 if (!autonomousList.containsKey(autoPath)) {
@@ -403,6 +399,23 @@ public final class AutonomousContainer {
         } finally {
             networkAutoLock.unlock();
         }
+        return selectedAuto;
+    }
+
+    /**
+     * Run an auto with the given name and side. These names should match the names given by {@link #getAutonomousNames()}.
+     * <p>
+     * If the auto is not found with the given side, the code will look for an auto with no side. This means you don't have to perform checks to determine if the auto is sided or not.
+     *
+     * @param name                    The name of the auto to run.
+     * @param side                    The side of the robot that the auto will be run on.
+     * @param allowRunningNetworkAuto Weather to allow network autos to be run instead of the selected auto. If a network auto is loaded and this is true, it will be run instead of the selected auto.
+     */
+    @SuppressWarnings("unused")
+    public synchronized void runAutonomous(String name, String side, boolean allowRunningNetworkAuto) {
+        @Nullable GuiAuto selectedAuto;
+
+        selectedAuto = getAuto(name, side, allowRunningNetworkAuto);
 
         // If the auto is null, it means that the auto was not found.
         if (selectedAuto == null) {

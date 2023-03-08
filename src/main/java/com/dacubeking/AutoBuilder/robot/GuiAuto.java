@@ -129,4 +129,13 @@ public class GuiAuto implements Runnable {
         System.out.println("Finished Autonomous at " + Timer.getFPGATimestamp());
         getCommandTranslator().stopRobot();
     }
+
+    /**
+     * Gets the initial pose of the robot.
+     *
+     * @return The initial pose of the robot.
+     */
+    public @Nullable Pose2d getInitialPose() {
+        return initialPose;
+    }
 }

@@ -299,8 +299,7 @@ public final class AutonomousContainer {
             blockedThread.interrupt();
         }
     }
-
-    @Internal
+    
     public synchronized static CommandTranslator getCommandTranslator() {
         return getInstance().commandTranslator;
     }

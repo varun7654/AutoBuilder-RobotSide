@@ -138,4 +138,12 @@ public class GuiAuto implements Runnable {
     public @Nullable Pose2d getInitialPose() {
         return initialPose;
     }
+
+    @Override
+    public String toString() {
+        return "GuiAuto{" +
+                "initialPose=" + initialPose +
+                ",autonomous=" + autonomous +
+                '}';
+    }
 }

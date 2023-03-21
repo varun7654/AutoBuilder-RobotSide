@@ -103,4 +103,12 @@ public class TrajectoryAutonomousStep extends AbstractAutonomousStep {
         scriptsToExecuteByTime.clear();
         scriptsToExecuteByPercent.clear();
     }
+
+    @Override
+    public String toString() {
+        return "TrajectoryAutonomousStep{" +
+                "trajectory=" + trajectory +
+                ", rotations=" + rotations +
+                '}';
+    }
 }

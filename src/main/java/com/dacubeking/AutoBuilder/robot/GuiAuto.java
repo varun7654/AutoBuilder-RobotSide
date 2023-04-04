@@ -130,6 +130,15 @@ public class GuiAuto implements Runnable {
         getCommandTranslator().stopRobot();
     }
 
+    /**
+     * Gets the initial pose of the robot.
+     *
+     * @return The initial pose of the robot.
+     */
+    public @Nullable Pose2d getInitialPose() {
+        return initialPose;
+    }
+
     @Override
     public String toString() {
         return "GuiAuto{" +

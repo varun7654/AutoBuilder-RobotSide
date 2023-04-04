@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  * A line that can be drawn to the screen.
  */
 public class Line extends Drawable {
-    private static final byte TYPE = 0x02;
+    private static final byte TYPE = 0x01;
     public final Vector2 start;
     public final Vector2 end;
 

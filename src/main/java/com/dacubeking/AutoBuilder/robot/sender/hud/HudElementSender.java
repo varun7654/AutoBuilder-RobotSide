@@ -5,6 +5,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 class HudElementSender {
@@ -27,18 +29,32 @@ class HudElementSender {
      * Sends all hud elements to the GUI.
      */
     protected static void send() {
-       synchronized (hudElements) {
-           int size = 0;
-           for (byte[] bytes : hudElements.values()) {
-               size += bytes.length + Integer.BYTES;
-           }
+        synchronized (hudElements) {
+            int size = 0;
+            for (byte[] bytes : hudElements.values()) {
+                size += bytes.length + Integer.BYTES;
+            }
 
-           ByteBuffer buffer = ByteBuffer.allocate(size);
-           for (byte[] bytes : hudElements.values()) {
-               buffer.put(bytes);
-           }
+            ByteBuffer buffer = ByteBuffer.allocate(size);
+            for (byte[] bytes : hudElements.values()) {
+                buffer.putInt(bytes.length);
+                buffer.put(bytes);
+            }
 
-           hudElementsEntry.setRaw(buffer.array());
-       }
+            hudElementsEntry.setRaw(buffer.array());
+        }
+    }
+
+    protected static List<HudElement> getHudElements(byte[] bytes) {
+        List<HudElement> hudElements = new ArrayList<>();
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        while (buffer.hasRemaining()) {
+            int size = buffer.getInt();
+            byte[] elementBytes = new byte[size];
+            buffer.get(elementBytes);
+            HudElement element = HudElement.fromBytes(elementBytes);
+            hudElements.add(element);
+        }
+        return hudElements;
     }
 }

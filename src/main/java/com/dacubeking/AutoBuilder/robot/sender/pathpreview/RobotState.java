@@ -3,6 +3,8 @@ package com.dacubeking.AutoBuilder.robot.sender.pathpreview;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.Timer;
 
+import java.nio.charset.StandardCharsets;
+
 public class RobotState {
     public final double x;
     public final double y;
@@ -223,6 +225,6 @@ public class RobotState {
      * @return Number of bytes this object will take up when converted to a byte array.
      */
     public int size() {
-        return Double.BYTES * 7 + name.length() * Character.BYTES;
+        return Double.BYTES * 7 + name.getBytes(StandardCharsets.UTF_8).length;
     }
 }

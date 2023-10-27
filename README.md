@@ -1,3 +1,5 @@
+# Code has been moved to the main library (https://github.com/varun7654/AutoBuilder)
+
 # AutoBuilder-RobotSide
  
 The robot side to https://github.com/FRC3476/AutoBuilder
